@@ -13,8 +13,8 @@ nPractrials=5;
 %%
 % threshold between peaks for detection
 pkdist = Fs/2.5; % 400ms.
-participantstepwidths= [30,15, 8]; %samples, May need to toggle per ppant.
-pkheight = 0.0002; % (m)
+% participantstepwidths= [30,15, 8]; %samples, May need to toggle per ppant.
+pkheight = 0.005; % (m)
 
 figure(1); clf;
 set(gcf, 'units', 'normalized', 'position', [0,0, .9, .9], 'color', 'w', 'visible', 'off');
@@ -22,7 +22,7 @@ set(gcf, 'units', 'normalized', 'position', [0,0, .9, .9], 'color', 'w', 'visibl
 for ippant = 1:nsubs
     cd([datadir filesep 'ProcessedData'])
    
-    pkdist = participantstepwidths(ippant);
+%     pkdist = participantstepwidths(ippant);
     %%load data from import job.
     load(pfols(ippant).name);
     savename = pfols(ippant).name;
@@ -68,7 +68,7 @@ for ippant = 1:nsubs
          
             %find local peaks.
             %Threshold peak finder using something reasonable. like 500ms
-            
+            % Turns out the troughs are much cleaner, so look for those.
             
 %             [~, locs_p]= findpeaks(trialD_sm, 'MinPeakDistance',pkdist, 'MinPeakProminence', pkheight); %
             [~, locs_p]= findpeaks(trialD_sm, 'MinPeakDistance',pkdist);

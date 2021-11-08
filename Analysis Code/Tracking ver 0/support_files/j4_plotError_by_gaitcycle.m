@@ -99,7 +99,7 @@ if job.plotPFX
             hold on;
             yyaxis right;
             
-            xvec= linspace(1,length(headData),9*iGC);
+            xvec= linspace(1,size(headData,2),9*iGC);
             bh=bar(xvec, varData*1000);
             bh.FaceAlpha = .2;
             ylabel('Hand-Targ Var (mm)');

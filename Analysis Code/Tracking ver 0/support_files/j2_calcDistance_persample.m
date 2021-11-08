@@ -3,6 +3,10 @@
 % Here we calculate the 3D distance between hand and target at each time 
 % point. Then store both trial level data, and cycle by cycle.
 
+% This also outputs a trial-by-trial figure, overlaying head pos, and
+% error, for each walk trajectory.
+% Note the shading for gaits retained / excluded.
+
 % can calculate distance bw 2 3D points using:
 % 1) sqrt(sum((A - B) .^ 2))
 % 2) norm(A-B)
