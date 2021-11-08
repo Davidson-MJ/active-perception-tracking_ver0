@@ -49,9 +49,7 @@ public class recordData : MonoBehaviour
 
         //create text file for trial summary data:
         //createSummaryTextfile();
-
-        outputFile_pos = outputFolder + runExperiment.participant + "_" + System.DateTime.Now.ToString("yyyy-MM-dd-hh-mm") + "_framebyframe.csv";
-
+       
     }
 
     void Update()
@@ -139,8 +137,9 @@ public class recordData : MonoBehaviour
     {
         //outputFolder = "C:/Users/vrlab/Documents/Matt/Projects/Output/walking_Ver1_Detect/";
         outputFolder = "C:/Users/User/Documents/matt/GitHub/active-perception-tracking_ver0/Analysis Code/Tracking ver 0/Raw_data/";
+        outputFile_pos = outputFolder + runExperiment.participant + "_" + System.DateTime.Now.ToString("yyyy-MM-dd-hh-mm") + "_framebyframe.csv";
 
-       
+
         string columnNames = "date," +
             // add experiment: walkingTracking2D
             "participant," +

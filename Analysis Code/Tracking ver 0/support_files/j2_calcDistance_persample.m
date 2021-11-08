@@ -9,9 +9,9 @@
 
 cd([datadir filesep 'ProcessedData'])
 pfols = dir([pwd filesep '*raw.mat']);
-
+nPractrials=5;
 %%
-for isub = 2%1:nsubs
+for isub = 1:length(pfols)
     cd([datadir filesep 'ProcessedData'])
     %%load data from import job.
     load(pfols(isub).name);
@@ -28,9 +28,13 @@ for isub = 2%1:nsubs
        A = [HandPos(itrial).X(isamp), HandPos(itrial).Y(isamp), HandPos(itrial).Z(isamp)];
        B=  [TargPos(itrial).X(isamp), TargPos(itrial).Y(isamp), TargPos(itrial).Z(isamp)];
        
+       Yerr = TargPos(itrial).Y(isamp) - HandPos(itrial).Y(isamp);
+       Xerr = TargPos(itrial).X(isamp) - HandPos(itrial).X(isamp);
 %        Hand_Targ_dist(itrial,isamp) = sqrt(sum((A - B) .^ 2)); 
 %        Hand_Targ_dist(itrial,isamp) =norm(A-B); 
        HandPos(itrial).dist2Targ(isamp) = norm(A-B);
+       HandPos(itrial).Yerror(isamp) = Yerr;
+       HandPos(itrial).Xerror(isamp) = Xerr;
         end
     end % itrial
     
@@ -67,6 +71,16 @@ for isub = 2%1:nsubs
         yyaxis right
         plot(Timevec, HandPos(itrial).dist2Targ, 'linew', 2);
         ylabel('raw Error')
+        % show the window retained:
+        if itrial>nPractrials
+        trs = HeadPos(itrial).Y_gait_troughs;
+        maxE = max(HandPos(itrial).dist2Targ);
+        xp = [0 0 Timevec(trs(3)) Timevec(trs(3))]; % show up to 4th trough, since that is excluded as start point.
+        yp= [0 maxE maxE 0];
+        patch(xp,yp, [.8 .8 .8], 'FaceAlpha', 0.5)
+        xp2 = [Timevec(trs(end-2)), Timevec(trs(end-2)), Timevec(end), Timevec(end)];
+         patch(xp2,yp, [.8 .8 .8], 'FaceAlpha', 0.5);
+        end
         pcount=pcount+1;
     end
     

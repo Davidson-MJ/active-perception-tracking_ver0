@@ -18,7 +18,7 @@ nsubs= length(pfols);
 Fs = 90;
 % Timevec = [1:500]*1/90;
 
-nPrac=6; % trial indices for skipping (no peaks/ troughs).
+nPrac=5; % trial indices for skipping (no peaks/ troughs).
 
 resampSize = 200; % resample the gait cycle (DUAL CYCLE) to this many samps.
 %%
@@ -35,7 +35,7 @@ disp(['Preparing j3a ' savename]);
 
 TargetError_perTrialpergait_doubleGC =[];
 
-for itrial=nPrac:size(Head_posmatrix,2)
+for itrial=nPrac+1:size(Head_posmatrix,2)
     
     trs = HeadPos(itrial).Y_gait_troughs;
         pks = HeadPos(itrial).Y_gait_peaks;
@@ -88,9 +88,9 @@ ntrials = size(HeadPos,2);
 % plot average error over gait cycle, first averaging within trials.
 [PFX_err_doubleGC, PFX_headY_doubleGC]= deal(zeros(ntrials,resampSize));
 [PFX_binnedVar_pertrialsteps_doubleGC]= deal(zeros(ntrials,18)); % also plot the binned variance
-PFX_allsteps_Err_doubleGC=[];
+PFX_allsteps_binnedErr_doubleGC=[];
 stepCount=1;
-for itrial= nPrac:size(TargetError_perTrialpergait_doubleGC,2)
+for itrial= nPrac+1:size(TargetError_perTrialpergait_doubleGC,2)
     
     % omit first and last gaitcycle from each trial
     TrialD= TargetError_perTrialpergait_doubleGC(itrial).gaitError([3:(end-2)],:);
@@ -108,7 +108,7 @@ for itrial= nPrac:size(TargetError_perTrialpergait_doubleGC,2)
     %may want to instead calculate variance across all steps in exp,
     %without sub averaging.
     
-    PFX_allsteps_Err_doubleGC = [PFX_allsteps_Err_doubleGC; TrialD];
+    PFX_allsteps_binnedErr_doubleGC = [PFX_allsteps_binnedErr_doubleGC; TrialD];
     
     
          %% debug, check first and last trial are missing;
@@ -130,7 +130,7 @@ end % trial
 PFX_binnedVar_allsteps_doubleGC=[];
 for ibin= 1:18
     idx = [1:10] + (ibin-1)*10;
-    tmp = PFX_allsteps_Err_doubleGC(:,idx);
+    tmp = PFX_allsteps_binnedErr_doubleGC(:,idx);
     PFX_binnedVar_allsteps_doubleGC(ibin) = mean(var(tmp));
 end
 %% visualize ppant error (debugging)
@@ -145,7 +145,7 @@ plot(mean(PFX_err_doubleGC,1));
     disp(['saving targ error per stride cycle gait...' savename])
 
 save(savename, 'HandPos', 'TargetError_perTrialpergait_doubleGC',...
-    'PFX_err_doubleGC', 'PFX_headY_doubleGC', 'PFX_allsteps_Err_doubleGC',...
+    'PFX_err_doubleGC', 'PFX_headY_doubleGC', 'PFX_allsteps_binnedErr_doubleGC',...
     'PFX_binnedVar_pertrialsteps_doubleGC', 'PFX_binnedVar_allsteps_doubleGC', '-append');
 end % subject
 

@@ -116,7 +116,7 @@ public class randomWalk : MonoBehaviour
                     //Vector3 stepDirection = new Vector3(Random.Range(-0.01f,.01f), Random.Range(-1f, 1f), Random.Range(-1f, 1f)); // for removing depth (interferes with gait).
 
                     //removing RW for debugging.
-                    Vector3 stepDirection = new Vector3(Random.Range(-0.01f, .01f), Random.Range(-2f, 2f), Random.Range(-2f, 2f)); // for removing depth (interferes with gait).
+                    Vector3 stepDirection = new Vector3(Random.Range(-0.01f, .01f), Random.Range(-1.5f, 1.5f), Random.Range(-1.5f, 1.5f)); // for removing depth (interferes with gait).
 
                     stepDistance = Random.Range(stepDistanceRange.x, stepDistanceRange.y);
                     stepTowards = previousLocation + (stepDirection * stepDistance);

@@ -13,8 +13,9 @@ cd([datadir filesep 'ProcessedData'])
 pfols= dir([pwd  filesep '*raw.mat']);
 nsubs= length(pfols);
 Fs = 90;
+nPractrials= 5;
 %%
-for ippant = 2%1:nsubs
+for ippant = 1:nsubs
     cd([datadir filesep 'ProcessedData'])    %%load data from import job.
     load(pfols(ippant).name);
     savename = pfols(ippant).name;
@@ -26,7 +27,7 @@ for ippant = 2%1:nsubs
     
     TargetError_perTrialpergait =[];
     
-    for itrial=6:size(Head_posmatrix,2)
+    for itrial=nPractrials+1:size(Head_posmatrix,2)
         
         trs = HeadPos(itrial).Y_gait_troughs;
         pks = HeadPos(itrial).Y_gait_peaks;
@@ -91,9 +92,9 @@ for ippant = 2%1:nsubs
     % plot average error over gait cycle, first averaging within trials.
     [PFX_err, PFX_headY]= deal(zeros(ntrials,100));
     [PFX_binnedVar_pertrialsteps]= deal(zeros(ntrials,9)); % also plot the binned variance
-    PFX_allsteps_Err=[];
+    PFX_allsteps_binnedErr=[];
     stepCount=1;
-    for itrial= 1:size(TargetError_perTrialpergait,2)
+    for itrial= nPractrials+1:size(TargetError_perTrialpergait,2)
         
         % omit first 2 and last 2 gaitcycle from each trial
         TrialD= TargetError_perTrialpergait(itrial).gaitError([3:(end-2)],:);
@@ -111,7 +112,7 @@ for ippant = 2%1:nsubs
         %may want to instead calculate variance across all steps in exp,
         %without sub averaging.
         
-        PFX_allsteps_Err = [PFX_allsteps_Err; TrialD];
+        PFX_allsteps_binnedErr = [PFX_allsteps_binnedErr; TrialD];
         
         %     %% debug, check first and last trial are missing;
         %     clf;
@@ -132,7 +133,7 @@ for ippant = 2%1:nsubs
     PFX_binnedVar_allsteps=[];
     for ibin= 1:9
         idx = [1:10] + (ibin-1)*10;
-        tmp = PFX_allsteps_Err(:,idx);
+        tmp = PFX_allsteps_binnedErr(:,idx);
         PFX_binnedVar_allsteps(ibin) = mean(var(tmp));
     end
     %% visualize ppant error (debugging)
@@ -146,7 +147,7 @@ for ippant = 2%1:nsubs
     %%
     disp(['saving targ error per gait...' savename])
     save(savename, 'HandPos', 'TargetError_perTrialpergait',...
-        'PFX_err', 'PFX_headY', 'PFX_allsteps_Err',...
+        'PFX_err', 'PFX_headY', 'PFX_allsteps_binnedErr',...
         'PFX_binnedVar_pertrialsteps', 'PFX_binnedVar_allsteps', '-append');
 end % subject
 

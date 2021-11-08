@@ -41,7 +41,8 @@ public class showText : MonoBehaviour
         }
         else if (text2show ==3) // between trials.
         {
-            thestring = "Pull the <left> trigger to begin Trial " + runExperiment.TrialCount +1 + " / " + runExperiment.nAllTrials; ;
+           
+            thestring = "Pull the <left> trigger to begin Trial " + (runExperiment.TrialCount +1) + " / " + runExperiment.nAllTrials; ;
         }
         thestring.Replace("\\n", "\n");
         textMesh.text = thestring;

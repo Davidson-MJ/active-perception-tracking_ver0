@@ -56,7 +56,7 @@ for ippant = 1:nsubs
     vec_lengths=[];
     for itrial = 1:length(unique(Trials))
         
-        trial_rows = find(Trials==itrial);
+        trial_rows = find(Trials==itrial-1); % 0 index in Unity.
         
         %Head first (X Y Z)
         HeadPos(itrial).X = Data(intersect(hx, trial_rows));

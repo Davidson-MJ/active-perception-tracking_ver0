@@ -7,7 +7,7 @@ cd([datadir filesep 'ProcessedData'])
 pfols= dir([pwd  filesep '*raw.mat']);
 nsubs= length(pfols);
 
-job.concatGFX=1;
+job.concatGFX=0;
 job.plotPFX=1; % single and dual gait cycles.
 job.plotGFX=0;
 
@@ -78,11 +78,11 @@ if job.plotPFX
             plotpos= 1+(iGC-1)*2;
             subplot(2,2,plotpos)
             yyaxis left; % activate left Y axis for head pos.
-            plot(1:length(headData), nanmean(headData,1), ['ko']);
+            plot(1:size(headData,2), nanmean(headData,1), ['ko']);
             ylabel('norm Head height');
             hold on;
             yyaxis right;
-            plot(1:length(headData), nanmean(errData,1)*1000, 'linew', 2);
+            plot(1:size(headData,2), nanmean(errData,1)*1000, 'linew', 2);
             mp = squeeze(nanmean(errData,1)) *1000;
             stp = std(errData.*1000,1);
             %         shadedErrorBar(1:length(headData), mp,stp, [],1);
@@ -94,7 +94,7 @@ if job.plotPFX
             plotpos= 2+(iGC-1)*2;
             subplot(2,2,plotpos);
             yyaxis left; % activate left Y axis for head pos.
-            plot(1:length(headData), nanmean(headData,1), ['ko']);
+            plot(1:size(headData,2), nanmean(headData,1), ['ko']);
             ylabel('norm Head height');
             hold on;
             yyaxis right;
@@ -139,7 +139,7 @@ if job.plotGFX
         plotpos= 1+(iGC-1)*2;
         subplot(2,2,plotpos)
         yyaxis left; % activate left Y axis for head pos.
-        plot(1:length(headData), mean(headData,1), ['ko']);
+        plot(1:size(headData,2), mean(headData,1), ['ko']);
         ylabel('norm Head height');
         hold on;
         yyaxis right;
@@ -154,7 +154,7 @@ if job.plotGFX
          plotpos= 2+(iGC-1)*2;
             subplot(2,2,plotpos)
         yyaxis left;
-        plot(1:length(headData), mean(headData,1), ['ko']);
+        plot(1:size(headData,2), mean(headData,1), ['ko']);
         ylabel('norm Head height');
         hold on;
         
