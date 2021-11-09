@@ -37,32 +37,76 @@ for ippant = 1:nsubs
         tmpPos = HeadPos(itrial).Y;
         tmpErr = squeeze(HandPos(itrial).dist2Targ);
         
+        tmpErr_Ydim = squeeze(HandPos(itrial).Yerror);
+        tmpErr_Xdim = squeeze(HandPos(itrial).Xerror);
+        tmpErr_Zdim = squeeze(HandPos(itrial).Zerror);
+        
         %preAllocate for easy storage
         gaitD=[]; %struct
-        [gaitHeadY, gaitErr]= deal(zeros(length(pks), 100)); % we will normalize the vector lengths.
+        [gaitHeadY, gaitErr, gaitErrX, gaitErrY, gaitErrZ]= deal(zeros(length(pks), 100)); % we will normalize the vector lengths.
         
         for igait=1:length(pks)
             gaitsamps =[trs(igait):trs(igait+1)];
+            %% store HEAD data first:
             % head Y data this gait:
+            
+            gaitD(igait).gaitsamps = gaitsamps;
+            
             gaitDtmp = tmpPos(gaitsamps);
+            gaitD(igait).Head_Yraw = gaitDtmp;
             
             % normalize height between 0 and 1
             gaitDtmp_n = rescale(gaitDtmp);
-            
-            %error (hand-targ) this gait:
-            errtmp = tmpErr(gaitsamps);
-            
-            gaitD(igait).Head_Yraw = gaitDtmp;
             gaitD(igait).Head_Ynorm = gaitDtmp_n;
-            gaitD(igait).Hand_Targ_err = errtmp;
+            %also resample along X vector:
             gaitD(igait).Head_Y_resampled = imresize(gaitDtmp_n', [1,100]);
-            gaitD(igait).Hand_Targ_err_resampled = imresize(errtmp, [1,100]);
-            
             %also store in matrix for easy handling:
             gaitHeadY(igait,:) = imresize(gaitDtmp_n', [1,100]);
-            gaitErr(igait,:) = imresize(errtmp, [1,100]);
             
-            %height
+            %% Store Error (hand-targ) next"
+            for errsource = 1:4
+                switch errsource
+                    case 1
+                        errD = tmpErr; % euclidean (3D)
+                    case 2
+                        errD = tmpErr_Xdim;
+                    case 3
+                        errD = tmpErr_Ydim;
+                    case 4
+                        errD = tmpErr_Zdim;
+                        
+                end
+                
+                %error (hand-targ) this gait:
+                errtmp = errD(gaitsamps);
+                
+                if errsource==1 % 3D error
+                    gaitD(igait).Hand_Targ_err = errtmp;
+                    %resampled
+                    gaitD(igait).Hand_Targ_err_resampled = imresize(errtmp, [1,100]);
+                    gaitErr(igait,:) = imresize(errtmp, [1,100]);
+                elseif errsource==2 % Xdim error
+                    gaitD(igait).Hand_Targ_errXdim = errtmp;
+                    %resampled
+                    gaitD(igait).Hand_Targ_errXdim_resampled = imresize(errtmp, [1,100]);
+                    gaitErrX(igait,:) = imresize(errtmp, [1,100]);
+                    
+                elseif errsource==3 % Ydim error
+                    gaitD(igait).Hand_Targ_errYdim = errtmp;
+                    %resampled
+                    gaitD(igait).Hand_Targ_errYdim_resampled = imresize(errtmp, [1,100]);
+                    gaitErrY(igait,:) = imresize(errtmp, [1,100]);
+                elseif errsource==4 %Zdim
+                    gaitD(igait).Hand_Targ_errZdim = errtmp;
+                    %resampled
+                    gaitD(igait).Hand_Targ_errZdim_resampled = imresize(errtmp, [1,100]);
+                    gaitErrZ(igait,:) = imresize(errtmp, [1,100]);
+                end
+                
+            end
+            
+            %% Store other waveform shape metrics:
+            % height:
             gaitD(igait).tr2pk = tmpPos(pks(igait)) - tmpPos(trs(igait));
             gaitD(igait).pk2tr = tmpPos(pks(igait)) - tmpPos(trs(igait+1));
             
@@ -76,10 +120,13 @@ for ippant = 1:nsubs
             
             gaitD(igait).risespeed = risespeed;
             gaitD(igait).fallspeed = fallspeed;
-            %compute prominence? height from peak to interp line between troughs?
             
         end % gait in trial.
         TargetError_perTrialpergait(itrial).gaitError = gaitErr;
+        TargetError_perTrialpergait(itrial).gaitErrorXdim = gaitErrX;
+        TargetError_perTrialpergait(itrial).gaitErrorYdim = gaitErrY;
+        TargetError_perTrialpergait(itrial).gaitErrorZdim = gaitErrZ;
+        
         TargetError_perTrialpergait(itrial).gaitHeadY= gaitHeadY;
         
         % save this gait info per trial in structure as well.
@@ -90,51 +137,40 @@ for ippant = 1:nsubs
     %% for all trials, compute the average error and head pos per time point
     ntrials = size(HeadPos,2);
     % plot average error over gait cycle, first averaging within trials.
-    [PFX_err, PFX_headY]= deal(zeros(ntrials,100));
-    [PFX_binnedVar_pertrialsteps]= deal(zeros(ntrials,9)); % also plot the binned variance
+    [PFX_err,PFX_errXdim, PFX_errYdim, PFX_headY,PFX_headZ]= deal(zeros(ntrials,100));
+    
+    [PFX_pertrial_binnedVar]= deal(zeros(ntrials,9)); % also plot the binned variance
+    
     PFX_allsteps_binnedErr=[];
+    
     stepCount=1;
     for itrial= nPractrials+1:size(TargetError_perTrialpergait,2)
         
         % omit first 2 and last 2 gaitcycle from each trial
-        TrialD= TargetError_perTrialpergait(itrial).gaitError([3:(end-2)],:);
+        TrialError= TargetError_perTrialpergait(itrial).gaitError([3:(end-2)],:);
+        TrialErrorXdim= TargetError_perTrialpergait(itrial).gaitErrorXdim([3:(end-2)],:);
+        TrialErrorYdim= TargetError_perTrialpergait(itrial).gaitErrorYdim([3:(end-2)],:);
+        TrialErrorZdim= TargetError_perTrialpergait(itrial).gaitErrorZdim([3:(end-2)],:);
+        
         TrialY= TargetError_perTrialpergait(itrial).gaitHeadY([3:(end-2)],:);
         
-        PFX_err(itrial,:) = mean(TrialD,1);
+        PFX_err(itrial,:) = mean(TrialError,1);
+        PFX_errXdim(itrial,:) = mean(TrialErrorXdim,1);
+        PFX_errYdim(itrial,:) = mean(TrialErrorYdim,1);
+        PFX_errZdim(itrial,:) = mean(TrialErrorZdim,1);
         PFX_headY(itrial,:)= mean(TrialY,1);
         
-        
-        for ibin= 1:9
-            idx = [1:10] + (ibin-1)*10;
-            PFX_binnedVar_pertrialsteps(itrial, ibin) = mean(var(TrialD(:,idx))); % mean var across steps.
-            
-        end
-        %may want to instead calculate variance across all steps in exp,
-        %without sub averaging.
-        
-        PFX_allsteps_binnedErr = [PFX_allsteps_binnedErr; TrialD];
-        
-        %     %% debug, check first and last trial are missing;
-        %     clf;
-        %     allD=(squeeze(TargetError_perTrialpergait(itrial).gaitError));
-        %     for ig = 1:size(allD,1)
-        %     subplot(2, size(allD,1), ig);
-        %     plot(squeeze(TargetError_perTrialpergait(itrial).gaitError(ig,:)));
-        %     end
-        %     for ig2=1:size(TrialD,1)
-        %     subplot(2,size(allD,1), ig2+ig);
-        %     plot(TrialD(ig2,:));
-        %     end
+        PFX_allsteps_binnedErr = [PFX_allsteps_binnedErr; TrialError];
         
         
     end % trial
     
     %calculate binned variance across entire experiment.
-    PFX_binnedVar_allsteps=[];
+    PFX_allsteps_binnedVar=[];
     for ibin= 1:9
         idx = [1:10] + (ibin-1)*10;
         tmp = PFX_allsteps_binnedErr(:,idx);
-        PFX_binnedVar_allsteps(ibin) = mean(var(tmp));
+        PFX_allsteps_binnedVar(ibin) = mean(var(tmp));
     end
     %% visualize ppant error (debugging)
     % clf
@@ -147,7 +183,7 @@ for ippant = 1:nsubs
     %%
     disp(['saving targ error per gait...' savename])
     save(savename, 'HandPos', 'TargetError_perTrialpergait',...
-        'PFX_err', 'PFX_headY', 'PFX_allsteps_binnedErr',...
-        'PFX_binnedVar_pertrialsteps', 'PFX_binnedVar_allsteps', '-append');
+        'PFX_err', 'PFX_errXdim','PFX_errYdim','PFX_errZdim','PFX_headY', 'PFX_allsteps_binnedErr',...
+        'PFX_allsteps_binnedVar', '-append');
 end % subject
 

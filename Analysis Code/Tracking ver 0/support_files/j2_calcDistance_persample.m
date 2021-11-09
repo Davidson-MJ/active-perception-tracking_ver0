@@ -34,11 +34,14 @@ for isub = 1:length(pfols)
        
        Yerr = TargPos(itrial).Y(isamp) - HandPos(itrial).Y(isamp);
        Xerr = TargPos(itrial).X(isamp) - HandPos(itrial).X(isamp);
+       Zerr = TargPos(itrial).Z(isamp) - HandPos(itrial).Z(isamp);
 %        Hand_Targ_dist(itrial,isamp) = sqrt(sum((A - B) .^ 2)); 
 %        Hand_Targ_dist(itrial,isamp) =norm(A-B); 
-       HandPos(itrial).dist2Targ(isamp) = norm(A-B);
+
+        HandPos(itrial).dist2Targ(isamp) = norm(A-B);
        HandPos(itrial).Yerror(isamp) = Yerr;
        HandPos(itrial).Xerror(isamp) = Xerr;
+       HandPos(itrial).Zerror(isamp) = Zerr;
         end
     end % itrial
     

@@ -7,7 +7,7 @@ cd([datadir filesep 'ProcessedData'])
 pfols= dir([pwd  filesep '*raw.mat']);
 nsubs= length(pfols);
 
-job.concatGFX=0;
+job.concatGFX=1;
 job.plotPFX=1; % single and dual gait cycles.
 job.plotGFX=0;
 
@@ -29,15 +29,15 @@ if job.concatGFX
         load(pfols(isub).name);
         
         %*1000 to compute all in mms (not metres)?
-        GFX_err(isub,:) = nanmean(PFX_allsteps_Err,1);
+        GFX_err(isub,:) = nanmean(PFX_err,1);
         GFX_headY(isub,:) = nanmean(PFX_headY,1);
-        GFX_errVar(isub,:) = PFX_binnedVar_allsteps;
+        GFX_errVar(isub,:) = PFX_allsteps_binnedVar;
         
         
         %double gait cycle:
         GFX_err_dbGC(isub,:) = nanmean(PFX_err_doubleGC,1);
         GFX_headY_dbGC(isub,:) = nanmean(PFX_headY_doubleGC,1);
-        GFX_errVar_dbGC(isub,:) = PFX_binnedVar_allsteps_doubleGC;
+        GFX_errVar_dbGC(isub,:) = PFX_allsteps_binnedVar_doubleGC;
         
         
     end %ppant
@@ -60,19 +60,23 @@ if job.plotPFX
         ntrials = size(HandPos,2);
         
         figure(1); clf;
+        xlabs = {'gait cycle (%)', 'stride-cycle (%)'};
+        xticks=[0,25,50,75,100;...
+            0, 50, 100, 150, 200];
+        nsteps = [size(PFX_allsteps_binnedErr,1), size(PFX_allsteps_binnedErr_doubleGC,1) ];
         for iGC=1:2 % plot both gait cycle analyses (single and dual).
             if iGC==1
                 headData = PFX_headY;
-                errData = PFX_allsteps_Err;
+                errData = PFX_err;
                 %                 errData = PFX_err;
-                varData = PFX_binnedVar_allsteps;
+                varData = PFX_allsteps_binnedVar;
             else
                 headData = PFX_headY_doubleGC;
                 %                 errData = PFX_err_doubleGC;
-                errData= PFX_allsteps_Err_doubleGC;
-                varData = PFX_binnedVar_allsteps_doubleGC;
+                errData= PFX_err_doubleGC;
+                varData = PFX_allsteps_binnedVar_doubleGC;
             end
-            nsteps = size(errData,1);
+            
             
             %% plot head pos and mean Error
             plotpos= 1+(iGC-1)*2;
@@ -80,32 +84,41 @@ if job.plotPFX
             yyaxis left; % activate left Y axis for head pos.
             plot(1:size(headData,2), nanmean(headData,1), ['ko']);
             ylabel('norm Head height');
+            set(gca,'YColor', 'k')
+            xlabel(xlabs{iGC})
             hold on;
             yyaxis right;
-            plot(1:size(headData,2), nanmean(errData,1)*1000, 'linew', 2);
-            mp = squeeze(nanmean(errData,1)) *1000;
-            stp = std(errData.*1000,1);
-            %         shadedErrorBar(1:length(headData), mp,stp, [],1);
-            ylabel('Hand-Targ Error (mm)');
-            set(gca, 'xtick',[]);
-            title([subjID ', nsteps = ' num2str(nsteps)])
-           
+            %             plot(1:size(headData,2), nanmean(errData,1)*1000, 'linew', 2);
+            mp = squeeze(nanmean(errData,1));
+            stp = std(errData,1)./sqrt(size(errData,1));
+            shadedErrorBar(1:size(headData,2), mp,stp, ['r'],1);
+            ylabel('Hand-Targ Error (m)');
+            set(gca,'YColor', 'r')
+            
+            set(gca, 'xtick', xticks(iGC,:), 'XTickLabel', {'0' , '25' '50', '75', '100'});
+            title([subjID ', n(' num2str(nsteps(iGC)) ')'])
+            
             %% plot head pos and binned err Variance.
             plotpos= 2+(iGC-1)*2;
             subplot(2,2,plotpos);
             yyaxis left; % activate left Y axis for head pos.
             plot(1:size(headData,2), nanmean(headData,1), ['ko']);
             ylabel('norm Head height');
+            set(gca,'YColor', 'k')
+            
+            xlabel(xlabs{iGC});
             hold on;
             yyaxis right;
             
             xvec= linspace(1,size(headData,2),9*iGC);
-            bh=bar(xvec, varData*1000);
+            bh=bar(xvec, varData, 'FaceColor', 'r');
             bh.FaceAlpha = .2;
-            ylabel('Hand-Targ Var (mm)');
-            %         set(gca, 'xtick',[]);
-            title([subjID ', nsteps = ' num2str(nsteps)])
+            ylabel('Hand-Targ Var (m)');
+            set(gca,'YColor', 'r')
             
+            %         set(gca, 'xtick',[]);
+            title([subjID ', n(' num2str(nsteps(iGC)) ')'])
+            set(gca, 'xtick',[ 0 100])
         end % GC
         set(gcf, 'color', 'w', 'units', 'normalized', 'position', [0 .1 .6 .8]);
         
@@ -121,7 +134,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%
 if job.plotGFX
     
-    figure(1); clf; 
+    figure(1); clf;
     
     for iGC=1:2 % plot both gait cycle analyses (single and dual).
         if iGC==1
@@ -151,15 +164,15 @@ if job.plotGFX
         set(gca, 'xtick',[]);
         title(['GFX  nsubs = ' num2str(nsubs)])
         %% head pos and variance
-         plotpos= 2+(iGC-1)*2;
-            subplot(2,2,plotpos)
+        plotpos= 2+(iGC-1)*2;
+        subplot(2,2,plotpos)
         yyaxis left;
         plot(1:size(headData,2), mean(headData,1), ['ko']);
         ylabel('norm Head height');
         hold on;
         
         yyaxis right;
-       
+        
         xvec = linspace(1,length(headData),9*iGC);
         bh=bar(xvec, mean(varData,1));
         stE = CousineauSEM(varData);
@@ -174,5 +187,5 @@ if job.plotGFX
         cd([datadir filesep 'Figures']);
         set(gcf, 'color', 'w', 'units', 'normalized', 'position', [0 .1 .6 .8]);
     end % both Gait cycles
-        print('-dpng', ['GFX_gaiterror']);
-    end
+    print('-dpng', ['GFX_gaiterror']);
+end
