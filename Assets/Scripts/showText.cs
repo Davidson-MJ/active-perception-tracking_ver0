@@ -9,13 +9,14 @@ public class showText : MonoBehaviour
 
     private TextMeshProUGUI textMesh;
     runExperiment runExperiment;
-
+    trialParameters trialParams;
     private string thestring;
     // Start is called before the first frame update
     void Start()
     {
         textMesh = gameObject.GetComponent<TextMeshProUGUI>();
         runExperiment = GameObject.Find("scriptHolder").GetComponent<runExperiment>();
+        trialParams = GameObject.Find("scriptHolder").GetComponent<trialParameters>();
     }
 
     //
@@ -42,7 +43,7 @@ public class showText : MonoBehaviour
         else if (text2show ==3) // between trials.
         {
            
-            thestring = "Pull the <left> trigger to begin Trial " + (runExperiment.TrialCount +1) + " / " + runExperiment.nAllTrials; ;
+            thestring = "Pull the <left> trigger to begin Trial " + (runExperiment.TrialCount +1) + " / " + trialParams.nTrials; ;
         }
         thestring.Replace("\\n", "\n");
         textMesh.text = thestring;

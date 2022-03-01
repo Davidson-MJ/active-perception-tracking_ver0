@@ -8839,6 +8839,7 @@ GameObject:
   - component: {fileID: 1896417870}
   - component: {fileID: 1896417867}
   - component: {fileID: 1896417868}
+  - component: {fileID: 1896417869}
   m_Layer: 0
   m_Name: scriptHolder
   m_TagString: Untagged
@@ -8858,7 +8859,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d1ee09535d8d81438bf87e9b2bbfcd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  participant: mjd
+  participant: test
   TrialCount: 0
   TrialType: 0
   targCount: 0
@@ -8924,6 +8925,18 @@ MonoBehaviour:
   Sphere: {fileID: 1649011273}
   effector: {fileID: 1137631248}
   hmd: {fileID: 1137631249}
+--- !u!114 &1896417869
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1896417864}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66155a7e33501a442b6e18d4c5fa98ec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &1896417870
 MonoBehaviour:
   m_ObjectHideFlags: 0

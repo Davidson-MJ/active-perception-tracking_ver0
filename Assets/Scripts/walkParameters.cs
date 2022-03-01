@@ -12,10 +12,12 @@ public class walkParameters : MonoBehaviour
     // random walk params
     [Header("Walking/Tracking Parameters")]
     //public float trialDuration;
-    public float reachHeight = 1.3f;
+    public float reachHeight;
     public float walkingPathDistance;
     public float walkingSpeed;
     public float walkDuration;
+    private float normDuration;
+    private float slowDuration;
     public float guideDistance;
 
     // Hide the following in the inspector, as we don't want tweaking.
@@ -37,6 +39,9 @@ public class walkParameters : MonoBehaviour
     public Vector3 cubeOrigin;
     public Vector3 planeDimensions;
     public Vector3 cubeDimensions;
+    public Vector3 upperBoundaries;
+    public Vector3 lowerBoundaries;
+
 
     [HideInInspector]
     public Vector3 passiveTaskOrigin;
@@ -50,11 +55,12 @@ public class walkParameters : MonoBehaviour
     {
         //rw params:
         //trialDuration = 120f;
-        reachHeight = 1.3f;
+        //reachHeight = 1.3f;
        
        // walkingSpeed = 0.7f; 
-        walkDuration = 8f;// 
-        walkingPathDistance = 7.5f;//  Determines end point. 
+        normDuration = 9f;//  // this needs to be toggled based on trial type.
+        slowDuration = 18f;
+        walkingPathDistance = 9.5f;//  Determines end point. 
         //approx steps is dist / 0.5
 
         rampDistance = 0f;// 0.7f; // used in walkingGuide, added to total path distance above.
@@ -73,6 +79,20 @@ public class walkParameters : MonoBehaviour
 
     }
 
+    // a method for updating the walkPathduration
+    public void setPathDuration(int btype)
+    {
+        // based on block type (btype)
+        // set the speeds (see trialParameters for assignment)
+        
+        if (btype<=2) //slow walk (1,2)
+        {
+            walkDuration = slowDuration
+        } else if (btype>2) // normal walk pace (3,4)
+        {
+            walkDuration = normDuration;
+        }
+    }
 }
 
 

@@ -25,6 +25,7 @@ public class recordData : MonoBehaviour
 
     runExperiment runExperiment;
     ViveInput viveInput;
+    trialParameters trialParameters;
     public enum phase // these fields can be set by other scripts (runExperiment) to control record state.
     {
         idle,
@@ -43,6 +44,8 @@ public class recordData : MonoBehaviour
     {
         runExperiment = GetComponent<runExperiment>();
         viveInput = GetComponent<ViveInput>();
+        trialParameters = GetComponent<trialParameters>();
+
 
         // create text file for Position tracking data.
         createPositionTextfile(); // below for details.
@@ -177,6 +180,67 @@ public class recordData : MonoBehaviour
     }
 
 
+    private void createSummaryTextfile()
+    {
+        //outputFolder = "C:/Users/vrlab/Documents/Matt/Projects/Output/walking_Ver1_Detect/";
+        outputFolder = "C:/Users/User/Documents/matt/GitHub/active-perception-Detection_v1-1wQuest/Analysis Code/Detecting ver 0/Raw_data/";
+
+        outputFile_summary = outputFolder + runExperiment.participant + "_" + System.DateTime.Now.ToString("yyyy-MM-dd-hh-mm") + "_trialsummary.csv";
+
+        string columnNames = "date," +
+            "participant," +
+            "trial," +
+            "block," +
+            "trialID," + // walk/speed combo
+            "isPrac," +
+            "isStationary," +           
+            "," +
+            "\r\n";
+
+        File.WriteAllText(outputFile_summary, columnNames);
+
+
+    }
+
+    // use a method to perform on relevant frame at trial end.
+    public void collectTrialSummary()
+    {
+
+        // at the end of each trial (walk trajectory), export the details as a summary.
+        // col names specified below (createSummaryTextfile)
+
+        // convert data of interest:
+
+
+
+        // convert bools to ints.
+        int testPrac = runExperiment.isPractice ? 1 : 0;
+
+        // fill data:
+        //    "date,"+
+        //    "participant," +
+        //    "trial," +
+        //    "block," +
+        //    "trialID," +
+        //    "isPrac," +
+        //    "isStationary," +
+        //    "," +
+        //    "\r\n";
+
+        string data =
+                  System.DateTime.Now.ToString("yyyy-MM-dd") + "," +
+                  runExperiment.participant + "," +
+                  runExperiment.TrialCount + "," +
+                  trialParameters.trialD.blockID + "," +
+                  trialParameters.trialD.trialID + "," +
+                  testPrac + "," +
+                  trialParameters.trialD.isStationary + "," +
+                  ",";
+                  
+
+        outputData_summary.Add(data);
+
+    }
 }
 
 
