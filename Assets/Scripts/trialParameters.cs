@@ -6,7 +6,8 @@ public class trialParameters : MonoBehaviour
 {
     // predefine the stimulus parameters to be used on each trial,
     // //that are not updated based on staircase.
-
+    
+    // TRACKING VERSION 0
     
     // to be filled on Start():
     private float trialDur;
@@ -23,13 +24,12 @@ public class trialParameters : MonoBehaviour
     private int[] trialSpeeds; // for the A19 walk space, set per trial.
     public int[,] blockTypeArray; //nTrials x 3 (block, trialID, type)
     private int[] blockTypelist;
-
     // import other settings:
     walkParameters walkParameters;
     runExperiment runExperiment;
 
 
-    [System.Serializable]
+    //[System.Serializable]
     public struct trialData
     {
         public float trialNumber, blockID, trialID, isStationary, trialType;
@@ -61,12 +61,20 @@ public class trialParameters : MonoBehaviour
         //probeColor = new Color(0.4f, 0.4f, 0.4f, targetAlpha); // dark grey
         //targetColor = new Color(.55f, .55f, .55f, targetAlpha); // light grey (start easy, become difficult).
 
-        //
+        ////////////////////////////////////
+        ///////////////////////////////////////
+        ///////////////////////////////////////
+        ////////////////////////////////////
         ntrialsperBlock = 20; //
         //
-        nStaircaseBlocks = 2; // In this block, first blocks (staircase) contains trials of each param        
-        nRegularBlocks = 8; //(2 reps of each combination)
-
+        nStaircaseBlocks = 1; // In this block, first blocks (staircase) contains trials of each param
+                              // note there are 5 conds (stationary, slow-slow, slow-fast, normal-slow, normal-fast)
+                              // do 4 trials of each per block (20/5 =4)
+        nRegularBlocks = 8; //(2 x ntrialsperBlock of each walk combination)
+        ////////////////////////////////////
+        ///////////////////////////////////////
+        ///////////////////////////////////////
+        ///////////////////////////////////////
         nBlocks = nStaircaseBlocks + nRegularBlocks;
         nTrials = (nBlocks) * ntrialsperBlock;
         blockTypelist = new int[(int)nBlocks]; // populated below.
@@ -74,9 +82,9 @@ public class trialParameters : MonoBehaviour
         // next, we will determine how many targets to present in our given walk duration (max 3 for home testing).
         // prefill the trialTypeArrayy as we go:
 
-        trialSpeeds = new int[2]; // nspeeds of sphere movement.
-        trialSpeeds[0] = 1; // first speed (normal pace)
-        trialSpeeds[1] = 2; // second speed (half pace)
+        //trialSpeeds = new int[2]; // nspeeds of sphere movement.
+        //trialSpeeds[0] = 1; // first speed (normal pace)
+        //trialSpeeds[1] = 2; // second speed (half pace)
 
         
 
@@ -94,15 +102,25 @@ public class trialParameters : MonoBehaviour
         // 2 = slow walk, fast sphere
         // 3 = normal walk, slow sphere
         // 4 = normal walk, fast sphere
+        // FILL BLOCKS
+        int[] BLOCKtypeArray = new int[4];
+        BLOCKtypeArray[0] = 1;
+        BLOCKtypeArray[1] = 2;
+        BLOCKtypeArray[2] = 3;
+        BLOCKtypeArray[3] = 4;
 
-        blockTypelist[0] = 1;
-        blockTypelist[1] = 1;
-        blockTypelist[2] = 2;
-        blockTypelist[3] = 2;
-        blockTypelist[4] = 3;
-        blockTypelist[5] = 3;
-        blockTypelist[6] = 4;
-        blockTypelist[7] = 4;
+        int typec = 0;
+        // fill amount of blocks we have with the above types
+        for (int iblock = 0; iblock<nRegularBlocks; iblock++)
+        {
+            blockTypelist[iblock] = BLOCKtypeArray[typec];
+            typec++;
+            if (typec == 4)
+            {
+                typec = 0;
+            }
+           
+        }
 
 
         // shuffle the order of stationary (0s) and walking (1s) blocks
@@ -110,26 +128,48 @@ public class trialParameters : MonoBehaviour
 
         blockTypeArray = new int[(int)nTrials, 3]; // 3 columns.
                                                    // ensure first staircased trials are stationary.
-        int typeCount = 1; // we will do half the trials of each type in our staircase:
-        int[] typeArray = new int[4];
-        typeArray[0] = 3; // easy order to begin with
-        typeArray[1] = 1;
-        typeArray[2] = 2;
-        typeArray[3] = 4;
+        int typeCount = 0; // we will do half the trials of each type in our staircase:
+        
 
-        int nTrialsperTypestaircase = ntrialsperBlock / 2;
+        int nTrialsperTypestaircase = ntrialsperBlock / 5; // even number output!
+        int[] practicetypeArray = new int[10];
+        practicetypeArray[0] = 0; // stationary to begin with.                         
+        practicetypeArray[1] = 3; // normal walk- slow sphere
+        practicetypeArray[2] = 4; // normal walk fast sphere
+        practicetypeArray[3] = 1; // slow walk -  slow sphere
+        practicetypeArray[4] = 2; // slow - fast
+        practicetypeArray[5] = 4; // norm fast
+        practicetypeArray[6] = 1; // slow slow
+        practicetypeArray[7] = 3; // norm slow
+        practicetypeArray[8] = 2; // slow fast
+        practicetypeArray[9] = 4; // norm fast 
+
+
         // staircaseblocks:
+        int bcounter = 0; // blockcounter
+        int fillme = 1;
         for (int iblock = 0; iblock < nStaircaseBlocks; iblock++)
         {
-            for (int itrial = 0; itrial < nTrialsperTypestaircase; itrial++)
+            if (typeCount == nTrialsperTypestaircase+1) // increment blockcounter
+            { bcounter = bcounter + 1;}
+            
+            for (int itrial = 0; itrial < ntrialsperBlock; itrial++)
             {
-                blockTypeArray[icounter, 0] = iblock;
+                blockTypeArray[icounter, 0] = bcounter;
                 blockTypeArray[icounter, 1] = itrial; // trial within block
-                blockTypeArray[icounter, 2] = typeArray[typeCount]; // prefill this array, swapping half way through the block.
+                blockTypeArray[icounter, 2] = practicetypeArray[typeCount]; // prefill this array, swapping half way through the block.
                 // when running the staircase, we will update the sphere speed half way through the block
                 icounter++;
+
+                if (fillme == nTrialsperTypestaircase)
+                {
+                    typeCount++;
+                    fillme = 1; // reset
+
+                } else { fillme++; }
+                
             }
-            typeCount++;
+           
 
         }
 

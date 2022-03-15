@@ -12,12 +12,12 @@ public class recordData : MonoBehaviour
 
     string outputFolder, outputFile_pos, outputFile_summary;
     float trialTime = 0f;
-    string[] timePointAxis = new string[9];
-    string[] timePointObject = new string[9];
-    float[] timePointPosition = new float[9];
+    string[] timePointAxis = new string[12];
+    string[] timePointObject = new string[12];
+    float[] timePointPosition = new float[12];
 
     public GameObject
-        Sphere, effector, hmd;
+        Sphere, effectorL, effectorR, hmd;
 
 
     List<string> outputData_pos = new List<string>();
@@ -51,8 +51,8 @@ public class recordData : MonoBehaviour
         createPositionTextfile(); // below for details.
 
         //create text file for trial summary data:
-        //createSummaryTextfile();
-       
+        createSummaryTextfile();
+
     }
 
     void Update()
@@ -70,7 +70,9 @@ public class recordData : MonoBehaviour
             // record target and effector ('cursor') position every frame
             // for efficiency, only call 'transform' once per frame
             Vector3 currentTarget = Sphere.transform.position;
-            Vector3 currentVeridicalEffector = effector.transform.position;
+            Vector3 currentVeridicalEffectorL = effectorL.transform.position;
+            Vector3 currentVeridicalEffectorR = effectorR.transform.position;
+
             Vector3 currentHead = hmd.transform.position;
 
            // convert from bool
@@ -81,12 +83,15 @@ public class recordData : MonoBehaviour
             timePointPosition[0] = currentTarget.x;
             timePointPosition[1] = currentTarget.y;
             timePointPosition[2] = currentTarget.z;
-            timePointPosition[3] = currentVeridicalEffector.x;
-            timePointPosition[4] = currentVeridicalEffector.y;
-            timePointPosition[5] = currentVeridicalEffector.z;
-            timePointPosition[6] = currentHead.x;
-            timePointPosition[7] = currentHead.y;
-            timePointPosition[8] = currentHead.z;
+            timePointPosition[3] = currentVeridicalEffectorL.x;
+            timePointPosition[4] = currentVeridicalEffectorL.y;
+            timePointPosition[5] = currentVeridicalEffectorL.z;
+            timePointPosition[6] = currentVeridicalEffectorR.x;
+            timePointPosition[7] = currentVeridicalEffectorR.y;
+            timePointPosition[8] = currentVeridicalEffectorR.z; ;
+            timePointPosition[9] = currentHead.x;
+            timePointPosition[10] = currentHead.y;
+            timePointPosition[11] = currentHead.z;
 
             for (int j = 0; j < timePointPosition.Length; j++)
             {
@@ -121,7 +126,7 @@ public class recordData : MonoBehaviour
     private void OnApplicationQuit()
     {
         saveRecordedDataList(outputFile_pos, outputData_pos);
-        //saveRecordedDataList(outputFile_summary, outputData_summary);
+        saveRecordedDataList(outputFile_summary, outputData_summary);
     }
 
     static void saveRecordedDataList(string filePath, List<string> dataList)
@@ -167,23 +172,29 @@ public class recordData : MonoBehaviour
         timePointAxis[6] = "x";
         timePointAxis[7] = "y";
         timePointAxis[8] = "z";
+        timePointAxis[9] = "x";
+        timePointAxis[10] = "y";
+        timePointAxis[11] = "z";
 
         timePointObject[0] = "target";
         timePointObject[1] = "target";
         timePointObject[2] = "target";
-        timePointObject[3] = "effector";
-        timePointObject[4] = "effector";
-        timePointObject[5] = "effector";
-        timePointObject[6] = "head";
-        timePointObject[7] = "head";
-        timePointObject[8] = "head";
+        timePointObject[3] = "effectorL";
+        timePointObject[4] = "effectorL";        
+        timePointObject[5] = "effectorL";
+        timePointObject[6] = "effectorR";
+        timePointObject[7] = "effectorR";
+        timePointObject[8] = "effectorR";
+        timePointObject[9] = "head";
+        timePointObject[10] = "head";
+        timePointObject[11] = "head";
     }
 
 
     private void createSummaryTextfile()
     {
         //outputFolder = "C:/Users/vrlab/Documents/Matt/Projects/Output/walking_Ver1_Detect/";
-        outputFolder = "C:/Users/User/Documents/matt/GitHub/active-perception-Detection_v1-1wQuest/Analysis Code/Detecting ver 0/Raw_data/";
+        outputFolder = "C:/Users/User/Documents/matt/GitHub/active-perception-tracking_ver0/Analysis Code/Tracking ver 0/Raw_data/";
 
         outputFile_summary = outputFolder + runExperiment.participant + "_" + System.DateTime.Now.ToString("yyyy-MM-dd-hh-mm") + "_trialsummary.csv";
 
@@ -191,10 +202,10 @@ public class recordData : MonoBehaviour
             "participant," +
             "trial," +
             "block," +
-            "trialID," + // walk/speed combo
+            "trialID," + // trial increment within block
+            "trialType," +
             "isPrac," +
-            "isStationary," +           
-            "," +
+            "isStationary,"+
             "\r\n";
 
         File.WriteAllText(outputFile_summary, columnNames);
@@ -211,17 +222,25 @@ public class recordData : MonoBehaviour
 
         // convert data of interest:
 
+        //store tg/ wlk speeds for easy analysis.
 
 
         // convert bools to ints.
         int testPrac = runExperiment.isPractice ? 1 : 0;
+        float ttype = trialParameters.trialD.trialType;
+        // type 0 = stationary
+        // type 1 = slow walk, normal target
+        // type 2 = slow walk, fast target
+        // type 3 = normal walk, normal target
+        // type 4 = normal walk, fast target
 
-        // fill data:
+        // fill data fields (ensure order matches below):
         //    "date,"+
         //    "participant," +
         //    "trial," +
         //    "block," +
         //    "trialID," +
+        // trialtype
         //    "isPrac," +
         //    "isStationary," +
         //    "," +
@@ -233,9 +252,9 @@ public class recordData : MonoBehaviour
                   runExperiment.TrialCount + "," +
                   trialParameters.trialD.blockID + "," +
                   trialParameters.trialD.trialID + "," +
+                  ttype + "," +
                   testPrac + "," +
-                  trialParameters.trialD.isStationary + "," +
-                  ",";
+                  trialParameters.trialD.isStationary + ",";
                   
 
         outputData_summary.Add(data);

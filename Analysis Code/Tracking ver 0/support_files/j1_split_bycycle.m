@@ -5,21 +5,21 @@
 
 cd([datadir filesep 'ProcessedData'])
 Fs=90;
-pfols = dir([pwd filesep '*Data_raw.mat']);
+pfols = dir([pwd filesep '*summary_data.mat']);
 nsubs= length(pfols);
-
-
-nPractrials=5;
+%% show ppant numbers:
+tr= table([1:length(pfols)]',{pfols(:).name}' );
+disp(tr)
 %%
 % threshold between peaks for detection
-pkdist = Fs/2.5; % 400ms.
-% participantstepwidths= [30,15, 8]; %samples, May need to toggle per ppant.
-pkheight = 0.005; % (m)
-
+pkduration = 0.45;  % sec
+pkdist= ceil(pkduration*Fs); % (in samples).
+pkheight = 0.0002; % (m)
+%%
 figure(1); clf;
 set(gcf, 'units', 'normalized', 'position', [0,0, .9, .9], 'color', 'w', 'visible', 'off');
 
-for ippant = 1:nsubs
+for ippant = 1%:nsubs
     cd([datadir filesep 'ProcessedData'])
    
 %     pkdist = participantstepwidths(ippant);
@@ -40,9 +40,9 @@ for ippant = 1:nsubs
         trialD= [HeadPos(itrial).Y]';
         trialD_sm = smooth(trialD', 5); % small smoothing factor.
 
-        Timevec            = HeadPos(itrial).times;
+        Timevec  = HeadPos(itrial).times;
             
-        if itrial < nPractrials+1
+        if  HeadPos(itrial).isStationary
             % print pos data, no peak detection:
             
             figure(1);
@@ -60,19 +60,37 @@ for ippant = 1:nsubs
             hold on;
             ylabel('Head position');
             xlabel('Time (s)');
-            title(['Trial ' num2str(itrial) ' (calibration)']);
+            title({['Trial ' num2str(itrial) ' (calibration),'];...
+                ['walk: ' num2str(HeadPos(itrial).walkSpeed) ', targ speed: ' num2str(HeadPos(itrial).targSpeed)]});
             axis tight
             pcount=pcount+1;
         else
             
-         
+            %subj/trial specific gait adjustment:
+          if strcmp(subjID(1:4), 'MD_R') && ismember(itrial,])
+              pkdist=ceil(0.3*Fs) ;
+          else
+              pkdist= ceil(pkduration*Fs); % (in samples).
+          end
+           
+            
+            
             %find local peaks.
             %Threshold peak finder using something reasonable. like 500ms
-            % Turns out the troughs are much cleaner, so look for those.
+            % Turns out the troughs are much cleaner, so look for thos,
+            % then define peaks as max between them.
             
 %             [~, locs_p]= findpeaks(trialD_sm, 'MinPeakDistance',pkdist, 'MinPeakProminence', pkheight); %
             [~, locs_p]= findpeaks(trialD_sm, 'MinPeakDistance',pkdist);
             [~, locs_tr]= findpeaks(-trialD_sm, 'MinPeakDistance',pkdist ,'MinPeakProminence', pkheight);
+            % define peaks, as max between troughs.
+            locs_p2=[];
+            for ipk = 1:length(locs_tr)-1
+                [m,i] = max(trialD_sm(locs_tr(ipk): locs_tr(ipk+1)));
+             locs_p2 = [locs_p2, i+locs_tr(ipk)-1];
+            end
+            % 
+            locs_p= locs_p2;
             
             % extract nearest peaks and troughs from unsmoothed data:
             [~, locs_p_r] =  findpeaks(trialD, 'MinPeakDistance', pkdist, 'MinPeakProminence', pkheight);
@@ -82,6 +100,11 @@ for ippant = 1:nsubs
                 [~, idx] = min(abs(locs_p_r - locs_p(ip)));
                 locs_ptr(ip) = locs_p_r(idx);
             end
+            
+            %make sure no duplicates:
+            locs_ptr= unique(locs_ptr);
+            
+            
             %same for troughs:
             [~, locs_tr_r] =  findpeaks(-trialD, 'MinPeakDistance', pkdist, 'MinPeakProminence', pkheight);
             %find nearest in raw data, to peaks detected in smoothed version
@@ -90,6 +113,9 @@ for ippant = 1:nsubs
                 [~,idx] = min(abs(locs_tr_r - locs_tr(ip)));
                 locs_trtr(ip) = locs_tr_r(idx);
             end
+            
+            %make sure no duplicates:
+            locs_trtr= unique(locs_trtr);
             
             % for stability, we want to start and end in a trough.
             if locs_trtr(1) > locs_ptr(1) % if trial starts with peak.
@@ -188,7 +214,14 @@ for ippant = 1:nsubs
             end % if more troughs than peaks.
             
             if length(locs_trtr) ~= length(locs_ptr)+1
-                error('check code')
+                subplot(5,3,pcount);
+                plot(Timevec, trialD);
+                hold on;
+                plot(Timevec(locs_ptr), trialD(locs_ptr), ['or']);
+                plot(Timevec(locs_trtr), trialD(locs_trtr), ['ob'])
+                disp('!checkcode')
+                title('!check code')
+                continue
             end
             
             %%     visualize results.
@@ -210,7 +243,13 @@ for ippant = 1:nsubs
             plot(Timevec(locs_trtr), trialD(locs_trtr), ['ob']);
             ylabel('Head position');
             xlabel('Time (s)');
-            title(['Trial ' num2str(itrial)]);
+            if HeadPos(itrial).isPrac
+                 title1= ['Trial ' num2str(itrial) ' (practice),'];
+            else
+            title1= ['Trial ' num2str(itrial) ','];
+            end
+            title({title1;...
+                ['walk: ' num2str(HeadPos(itrial).walkSpeed) ', targ speed: ' num2str(HeadPos(itrial).targSpeed)]});
             axis tight
             pcount=pcount+1;
             

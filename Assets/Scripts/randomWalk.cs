@@ -33,27 +33,27 @@ public class randomWalk : MonoBehaviour
     // random walk parameters // assigned in stimulusParameters
     public Vector3 upperBoundaries, lowerBoundaries, origin;
     public Vector2 stepDurationRange, stepDistanceRange;
-
+    public Vector2 fastTgRange, normalTgRange;
     // first step parameters.
     float stillDuration = .2f; // 200 ms before beginning RW at trial onset.
     float stillT0;
 
-
-
+    trialParameters trialParams;
+    walkParameters  walkParams;
     void Start()
     {
       
         GetComponent<MeshRenderer>().enabled = true;
-        
+        walkParams = GameObject.Find("scriptHolder").GetComponent<walkParameters>();
 
         // assign vars we need
-        stepDurationRange = new Vector2(0.2f, 0.4f);
+        stepDurationRange = walkParams.stepDurationRange;
 
-        // note that for floating precision, need to access the individual axes
-        stepDistanceRange = new Vector2(0.03f, 0.045f);
-       
+        // note that within walkParams, the distance range can be modified to change 
+        // difficulty of target tracking.
+        stepDistanceRange = walkParams.stepDistanceRange;
 
-
+        trialParams = GameObject.Find("scriptHolder").GetComponent<trialParameters>();
     }
 
     void Update()
@@ -139,4 +139,5 @@ public class randomWalk : MonoBehaviour
             walk = phase.idle;
         }
     }
+
 }

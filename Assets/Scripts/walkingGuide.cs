@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+///  manual TRACKING version
+/// </summary>
 public class walkingGuide : MonoBehaviour
 {
     // this Script is attached to the motionPath GameObject.
@@ -66,7 +69,7 @@ public class walkingGuide : MonoBehaviour
     void Update()
     {
 
-        if (!runExp.isPractice) // if not a calibration trial. begin motion.
+        if (!runExp.isStationary) // if not a stationary trial. begin motion.
         {
 
             if (walkMotion == motion.start) // update sesssion flow:
@@ -117,31 +120,7 @@ public class walkingGuide : MonoBehaviour
     private void applyMotion()
     {
 
-        //print(motionPhase);
-        
-        //if (motionPhase == motionProfile.acceleration)
-        //{
-            //tDelta += Time.deltaTime;
 
-
-
-            //Vector3 updatePosition =
-            //Vector3.Lerp(accelerationStartPoint[whichPointSet], startPoint[whichPointSet], tDelta/walkParameters.walkDuration);
-            //Vector3 updatePosition =
-            //Vector3.Lerp(accelerationStartPoint[whichPointSet], startPoint[whichPointSet], ((Mathf.Sin(tDelta) + 1) / Mathf.Sin(Mathf.PI / 2)));
-           
-            //Vector3 updatePosition = Vector3.Lerp(startPoint[whichPointSet], endPoint[whichPointSet], tDelta / walkParameters.walkDuration);
-            //transform.localPosition = updatePosition;
-
-
-            //transform.localPosition = updatePosition;
-
-            //if (tDelta >= walkParameters.rampDuration) //(3 * (Mathf.PI / 2) + (Mathf.PI / 2))) // what's going on here? mjd tDelta ~ 6.2 ?
-            //{
-            //    tDelta = 0;
-            //    motionPhase = motionProfile.linear;
-            //}
-        //}
 
         if (motionPhase == motionProfile.linear)
         {
@@ -153,10 +132,10 @@ public class walkingGuide : MonoBehaviour
             transform.localPosition = updatePosition;
 
             // 
-           
-                remainingDistance = Mathf.Abs(Mathf.Abs(updatePosition.x) - Mathf.Abs(endPoint[whichPointSet].x));
-            
-          
+
+            remainingDistance = Mathf.Abs(Mathf.Abs(updatePosition.x) - Mathf.Abs(endPoint[whichPointSet].x));
+
+
             //print("remaining distance:" + remainingDistance);
 
             //// check trial length (based on duraton)

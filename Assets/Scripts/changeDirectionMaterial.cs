@@ -37,6 +37,14 @@ public class changeDirectionMaterial : MonoBehaviour
     public void flipArrow()
     {
         // if not practice, flip arrow to match walk direction.        
-            transform.Rotate(0, 0, 180);        
+        if (runExp.TrialCount % 2 == 0)
+        {
+            // even trials.
+            transform.localEulerAngles = new Vector3(90f, 0f, 270f);
+        }
+        else
+        {
+            transform.localEulerAngles = new Vector3(90f, 0f, 90f);
+        }
     }
 }
