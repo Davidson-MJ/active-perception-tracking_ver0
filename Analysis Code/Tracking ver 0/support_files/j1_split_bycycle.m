@@ -18,8 +18,8 @@ pkheight = 0.0002; % (m)
 %%
 figure(1); clf;
 set(gcf, 'units', 'normalized', 'position', [0,0, .9, .9], 'color', 'w', 'visible', 'off');
-
-for ippant = 1%:nsubs
+%%
+for ippant = 2%:nsubs
     cd([datadir filesep 'ProcessedData'])
    
 %     pkdist = participantstepwidths(ippant);
@@ -42,6 +42,7 @@ for ippant = 1%:nsubs
 
         Timevec  = HeadPos(itrial).times;
             
+        %% if stationary trial, don't calculate pks and troughs:
         if  HeadPos(itrial).isStationary
             % print pos data, no peak detection:
             
@@ -64,15 +65,19 @@ for ippant = 1%:nsubs
                 ['walk: ' num2str(HeadPos(itrial).walkSpeed) ', targ speed: ' num2str(HeadPos(itrial).targSpeed)]});
             axis tight
             pcount=pcount+1;
-        else
+        
+        else %% subj was walking, overlay pks and troughs with head pos:  
             
             %subj/trial specific gait adjustment:
-          if strcmp(subjID(1:4), 'MD_R') && ismember(itrial,])
-              pkdist=ceil(0.3*Fs) ;
-          else
-              pkdist= ceil(pkduration*Fs); % (in samples).
-          end
-           
+            % we need to adjust the step length, to adjust on different walk speeds.
+            % some ppants take shorter steps when walking slowly, or on
+            % certain trials.
+            
+            if strcmp(subjID(1:4), 'AF_R') && ismember(itrial,[47, 50])
+                pkdist= ceil(0.35*Fs); 
+            else
+                pkdist= ceil(pkduration*Fs); % (in samples).
+            end
             
             
             %find local peaks.
@@ -80,42 +85,35 @@ for ippant = 1%:nsubs
             % Turns out the troughs are much cleaner, so look for thos,
             % then define peaks as max between them.
             
-%             [~, locs_p]= findpeaks(trialD_sm, 'MinPeakDistance',pkdist, 'MinPeakProminence', pkheight); %
-            [~, locs_p]= findpeaks(trialD_sm, 'MinPeakDistance',pkdist);
-            [~, locs_tr]= findpeaks(-trialD_sm, 'MinPeakDistance',pkdist ,'MinPeakProminence', pkheight);
-            % define peaks, as max between troughs.
-            locs_p2=[];
+            %             [~, locs_p]= findpeaks(trialD_sm, 'MinPeakDistance',pkdist, 'MinPeakProminence', pkheight); %
+            
+            [~, locs_tr]= findpeaks(-trialD, 'MinPeakDistance',pkdist, 'MinPeakProminence', pkheight);
+            
+            % define peaks, as max between troughs (in unsmoothed data).
+            locs_p2=zeros(1, size(locs_tr,1)-1);
             for ipk = 1:length(locs_tr)-1
-                [m,i] = max(trialD_sm(locs_tr(ipk): locs_tr(ipk+1)));
-             locs_p2 = [locs_p2, i+locs_tr(ipk)-1];
+                [m,i] = max(trialD(locs_tr(ipk): locs_tr(ipk+1)));
+                
+                % only store the 'peak' if it is a true peak, arbitrarily
+                % atleast 200 ms from the prev trough.
+                if i >= ceil(0.2*Fs)
+             locs_p2(ipk) = i+locs_tr(ipk)-1;
+                end
             end
-            % 
-            locs_p= locs_p2;
-            
-            % extract nearest peaks and troughs from unsmoothed data:
-            [~, locs_p_r] =  findpeaks(trialD, 'MinPeakDistance', pkdist, 'MinPeakProminence', pkheight);
-            %find nearest in raw data, to peaks detected in smoothed version
-            locs_ptr=zeros(1,length(locs_p));
-            for ip=1:length(locs_p)
-                [~, idx] = min(abs(locs_p_r - locs_p(ip)));
-                locs_ptr(ip) = locs_p_r(idx);
-            end
+            % remove the zeros (false peaks)
+            locs_p2(locs_p2==0) =[]; 
+            locs_ptr= locs_p2;
+%             
+%             % now find closest point to smoothed trough minimum between pks in raw data. 
+%           % define peaks, as max between troughs (in unsmoothed data).
+%             locs_trtr=zeros(1, size(locs_ptr,1));
+%             for ipk = 1:length(locs_ptr)-1
+%                 [m,i] = min(trialD(locs_ptr(ipk): locs_ptr(ipk+1)));
+%              locs_trtr(ipk) = i+locs_ptr(ipk)-1;
+%             end
             
             %make sure no duplicates:
-            locs_ptr= unique(locs_ptr);
-            
-            
-            %same for troughs:
-            [~, locs_tr_r] =  findpeaks(-trialD, 'MinPeakDistance', pkdist, 'MinPeakProminence', pkheight);
-            %find nearest in raw data, to peaks detected in smoothed version
-            locs_trtr=zeros(1,length(locs_tr));
-            for ip=1:length(locs_tr)
-                [~,idx] = min(abs(locs_tr_r - locs_tr(ip)));
-                locs_trtr(ip) = locs_tr_r(idx);
-            end
-            
-            %make sure no duplicates:
-            locs_trtr= unique(locs_trtr);
+            locs_trtr= unique(locs_tr);
             
             % for stability, we want to start and end in a trough.
             if locs_trtr(1) > locs_ptr(1) % if trial starts with peak.
@@ -140,8 +138,16 @@ for ippant = 1%:nsubs
             newpks = locs_ptr;
             
             if length(locs_trtr) ~= length(locs_ptr)+1
-                %% correct as necessary:
-                
+                %% debugging plot: to correct as necessary:
+                try subplot(5,3,pcount);
+                plot(Timevec, trialD);
+                hold on;
+                plot(Timevec(locs_ptr), trialD(locs_ptr), ['or']);
+                plot(Timevec(locs_trtr), trialD(locs_trtr), ['ob'])
+               
+                catch 
+                end
+%%
                 % find doubled pks (most likely):
                 for igait = 1:length(locs_trtr)-1
                     gstart = locs_trtr(igait);
@@ -170,39 +176,46 @@ for ippant = 1%:nsubs
                 
                 for igait = 1:length(locs_ptr)
                     %for each peak, check only one trough before and after.
-                    gstart = locs_trtr(igait);
-                   try  gend = locs_trtr(igait+1);
-                   catch
-                       continue
-                   end
-                    if locs_ptr(igait) > gend % if two troughs before a peak.
-                        %retain the min height as true trough.
-                        h1= trialD(gstart);
-                        h2= trialD(gend);
-                        if h1>h2
-                            %remove first trough
-                            %                        deltroughs = [deltroughs, igait];
-                            locs_trtr(igait)=[];
-                        else %remove second trough.
-                            locs_trtr(igait+1)=[];
-                        end
-                        
+                    if igait==1 % if first pk, should only be one trough before hand
+                    pktmp= locs_ptr(igait);
+                    %earlier troughs:
+                    earlyexist = find(locs_trtr< pktmp);
+                    
+                    else % subsequently, check there is only 1 trough in range.
+                        pktmp= locs_ptr(igait);
+                        pktmpprev = locs_ptr(igait-1);
+                         %earlier troughs:
+                         %%
+                    A = find(locs_trtr<= pktmp); 
+                    B= find(locs_trtr>=pktmpprev);
+                    earlyexist = intersect(A,B);
                     end
+                    
+                    %% retain minimum as true trough.
+                    if length(earlyexist)>1
+                        headpos = trialD(locs_trtr(earlyexist));
+                        % remove maximum.
+                        [~,i] = max(headpos);
+                        % remove from troughs:
+                        locs_trtr(earlyexist(i))=[];
+                    end
+                    
+                    
                     %% check if this is the last peak, that there is only one trough remaining:
                     if igait == length(locs_ptr)
-                        %last trough should be max, else error.
-                        if locs_trtr(igait+1) ~= (locs_trtr(end))
-                            % then retain only the minimum of the remaining
-                            % troughs.
-                            h1= trialD(locs_trtr(igait+1));
-                            h2= trialD(locs_trtr(end));
-                            if h1>h2
-                                %remove first trough
-                                %                        deltroughs = [deltroughs, igait];
-                                locs_trtr(igait+1)=[];
-                            else %remove second trough.
-                                locs_trtr(end)=[];
-                            end
+                       % find troughs later than this peak.
+                        pktmp= locs_ptr(igait);
+                          %later troughs:
+                        laterexist = find(locs_trtr> pktmp);
+                        
+                        locs_trtr_copy = locs_trtr;
+                        while length(laterexist)>1
+                             headpos = trialD(locs_trtr_copy(laterexist));
+                        % remove maximum.
+                        [~,i] = max(headpos);
+                        % remove from troughs:
+                        locs_trtr(laterexist(i))=[];
+                        laterexist(i)=[];
                         end
                     end
                     
@@ -214,14 +227,16 @@ for ippant = 1%:nsubs
             end % if more troughs than peaks.
             
             if length(locs_trtr) ~= length(locs_ptr)+1
-                subplot(5,3,pcount);
+%                 subplot(5,3,pcount);
+                cla;
                 plot(Timevec, trialD);
                 hold on;
                 plot(Timevec(locs_ptr), trialD(locs_ptr), ['or']);
                 plot(Timevec(locs_trtr), trialD(locs_trtr), ['ob'])
-                disp('!checkcode')
-                title('!check code')
-                continue
+                disp(['!checkcode subj:' subjID(1:4) ' trial ' num2str(itrial)])
+                title(['!check code trial: ' num2str(itrial)])
+%                 pcount=pcount+1;
+%                 continue
             end
             
             %%     visualize results.
@@ -236,7 +251,7 @@ for ippant = 1%:nsubs
                 clf;
                 
             end
-            subplot(5,3,pcount);
+            subplot(5,3,pcount); cla
             plot(Timevec, trialD);
             hold on;
             plot(Timevec(locs_ptr), trialD(locs_ptr), ['or']);

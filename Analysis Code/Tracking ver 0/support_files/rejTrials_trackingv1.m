@@ -10,7 +10,7 @@ badtrials=[];
 switch subjID
     %%%%tracking ver 1 (2 walk speeds, 2 target speeds).
     case 'MD_R_2022-03-07-10-15'
-        badtrials = [74,;
+
    
         %%%%%%%%%%% 
         %%%%%%%%%%% rejected:

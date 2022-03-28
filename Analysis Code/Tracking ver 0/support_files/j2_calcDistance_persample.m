@@ -20,6 +20,7 @@ for isub = 1:length(pfols)
     load(pfols(isub).name, 'HeadPos', 'HandPos_L', 'HandPos_R', 'TargPos','subjID');
     savename = pfols(isub).name;
     disp(['Preparing j2 ' savename]);
+    
     if strcmp(subjID(4), 'R')
         HandPos = HandPos_R;
         disp(['Using Right hand for ' subjID]);

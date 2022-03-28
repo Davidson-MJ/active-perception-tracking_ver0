@@ -1,5 +1,13 @@
-%%  Import from csv and save basics
-datadir = 'C:\Users\User\Documents\matt\GitHub\active-perception-tracking_ver0\Analysis Code\Tracking ver 0\Raw_data';
+% Tracking experiment (Var Walk and Targ Speeds)
+%%  Import from csv. FramebyFrame, then summary data.
+
+%%%%%% TRACKING TASK version %%%%%%
+%frame by frame first:
+%Mac:
+%PC:
+datadir='C:\Users\User\Documents\matt\GitHub\active-perception-tracking_ver0\Analysis Code\Tracking ver 0\Raw_data';
+%PC-HD
+% datadir = 'E:\Tracking ver 0\Raw_data';%%
 
 cd(datadir)
 pfols = dir([pwd filesep '*framebyframe.csv']);
@@ -117,10 +125,10 @@ for ippant = 1:nsubs
     rawFramedata_table = T;
     cd([datadir filesep 'ProcessedData'])
     
-    try save(savename, 'TargPos', 'HeadPos', 'HandPos_L', 'HandPos_R', 'rawFramedata_table', 'subjID', 'ppant', '-append');
-    catch
-        save(savename, 'TargPos', 'HeadPos', 'HandPos_L', 'HandPos_R','rawFramedata_table', 'subjID', 'ppant');
-    end
+%     try save(savename, 'TargPos', 'HeadPos', 'HandPos_L', 'HandPos_R', 'subjID', 'ppant', '-append');
+%     catch
+        save(savename, 'TargPos', 'HeadPos', 'HandPos_L', 'HandPos_R','subjID', 'ppant');
+%     end
 
 
 %%
