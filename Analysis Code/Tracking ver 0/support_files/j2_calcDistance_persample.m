@@ -13,8 +13,12 @@
 
 cd([datadir filesep 'ProcessedData'])
 pfols = dir([pwd filesep '*_summary_data.mat']);
+nsubs= length(pfols);
+%% show ppant numbers:
+tr= table([1:length(pfols)]',{pfols(:).name}' );
+disp(tr)
 %%
-for isub = 1:length(pfols)
+for isub = 1:10%length(pfols)
     cd([datadir filesep 'ProcessedData'])
     %%load data from import job.
     load(pfols(isub).name, 'HeadPos', 'HandPos_L', 'HandPos_R', 'TargPos','subjID');

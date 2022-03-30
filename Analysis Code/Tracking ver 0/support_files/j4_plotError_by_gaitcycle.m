@@ -4,45 +4,54 @@
 
 cd([datadir filesep 'ProcessedData'])
 
-pfols= dir([pwd  filesep '*raw.mat']);
+pfols= dir([pwd  filesep '*summary_data.mat']);
 nsubs= length(pfols);
 
 job.concatGFX=1;
 job.plotPFX=1; % single and dual gait cycles.
-job.plotGFX=0;
+job.plotGFX=0; %
 
 %%%%%%%%%%%%%%%%%%%%%%
 %% concat across subjs
 %%%%%%%%%%%%%%%%%%%%%%
 if job.concatGFX
     
-    %single cycle
-    [GFX_err,GFX_headY] = deal(zeros(nsubs, 100)); % we've resampled to 100 points.
-    [GFX_errVar] = zeros(nsubs,9);
-    %dual cycle
-    [GFX_err_dbGC,GFX_headY_dbGC] = deal(zeros(nsubs, 200)); % we've resampled to 100 points.
-    [GFX_errVar_dbGC] = zeros(nsubs,18);
+    %Structures for data:
+    [GFX_error,GFX_headY] = deal([]); % we've resampled to 100 points.
     
+    subjIDs={};
     for isub = 1:nsubs
         cd([datadir filesep 'ProcessedData'])
         %%load data from import job.
         load(pfols(isub).name);
+        for itrialtype = 1:4 %% save each condition separately.
         
-        %*1000 to compute all in mms (not metres)?
-        GFX_err(isub,:) = nanmean(PFX_err,1);
-        GFX_headY(isub,:) = nanmean(PFX_headY,1);
-        GFX_errVar(isub,:) = PFX_allsteps_binnedVar;
+            % per trial type, only store the relevant trials.
+            usetrials= find(PFX_trialinfo.trialType == itrialtype);
+            
+            
+            %single gait cycle first
+        GFX_error(itrialtype,isub).err = nanmean(PFX_err(usetrials,:),1);        
+        GFX_headY(itrialtype,isub).gc = nanmean(PFX_headY(usetrials,:),1);
         
         
         %double gait cycle:
-        GFX_err_dbGC(isub,:) = nanmean(PFX_err_doubleGC,1);
-        GFX_headY_dbGC(isub,:) = nanmean(PFX_headY_doubleGC,1);
-        GFX_errVar_dbGC(isub,:) = PFX_allsteps_binnedVar_doubleGC;
+        GFX_error(itrialtype,isub).err_doubgc= nanmean(PFX_err_doubleGC(usetrials,:),1);
+        GFX_headY(itrialtype,isub).doubgc = nanmean(PFX_headY_doubleGC(usetrials,:),1);
+        
+        %store trial description also:
+        GFX_error(itrialtype,isub).trialType = itrialtype;
+        GFX_error(itrialtype,isub).walkSpeed = PFX_trialinfo.walkSpeed(usetrials(1));
+        GFX_error(itrialtype,isub).targetSpeed = PFX_trialinfo.targetSpeed(usetrials(1));
+        
+        
+        subjIDs{isub} = ppant;
+        end
+        
         
         
     end %ppant
-    save('GFX_gaitcycle_error', 'GFX_err', 'GFX_headY', 'GFX_errVar',...
-        'GFX_errVar_dbGC', 'GFX_err_dbGC', 'GFX_headY_dbGC');
+    save('GFX_gaitcycle_error', 'GFX_error', 'GFX_headY', 'subjIDs');
     
 else
     load('GFX_gaitcycle_error');
@@ -51,83 +60,23 @@ end % job concat
 %%%%%%%%%%%%%%%%%%%%%%
 %% print PFX
 %%%%%%%%%%%%%%%%%%%%%%
+%%
 if job.plotPFX
-    for isub = 1:nsubs
-        cd([datadir filesep 'ProcessedData'])
-        %% load data from import job.
-        load(pfols(isub).name);
-        %%
-        ntrials = size(HandPos,2);
-        
-        figure(1); clf;
-        xlabs = {'gait cycle (%)', 'stride-cycle (%)'};
-        xticks=[0,25,50,75,100;...
-            0, 50, 100, 150, 200];
-        nsteps = [size(PFX_allsteps_binnedErr,1), size(PFX_allsteps_binnedErr_doubleGC,1) ];
-        for iGC=1:2 % plot both gait cycle analyses (single and dual).
-            if iGC==1
-                headData = PFX_headY;
-                errData = PFX_err;
-                %                 errData = PFX_err;
-                varData = PFX_allsteps_binnedVar;
-            else
-                headData = PFX_headY_doubleGC;
-                %                 errData = PFX_err_doubleGC;
-                errData= PFX_err_doubleGC;
-                varData = PFX_allsteps_binnedVar_doubleGC;
-            end
-            
-            
-            %% plot head pos and mean Error
-            plotpos= 1+(iGC-1)*2;
-            subplot(2,2,plotpos)
-            yyaxis left; % activate left Y axis for head pos.
-            plot(1:size(headData,2), nanmean(headData,1), ['ko']);
-            ylabel('norm Head height');
-            set(gca,'YColor', 'k')
-            xlabel(xlabs{iGC})
-            hold on;
-            yyaxis right;
-            %             plot(1:size(headData,2), nanmean(errData,1)*1000, 'linew', 2);
-            mp = squeeze(nanmean(errData,1));
-            stp = std(errData,1)./sqrt(size(errData,1));
-            shadedErrorBar(1:size(headData,2), mp,stp, ['r'],1);
-            ylabel('Hand-Targ Error (m)');
-            set(gca,'YColor', 'r')
-            
-            set(gca, 'xtick', xticks(iGC,:), 'XTickLabel', {'0' , '25' '50', '75', '100'});
-            title([subjID ', n(' num2str(nsteps(iGC)) ')'])
-            
-            %% plot head pos and binned err Variance.
-            plotpos= 2+(iGC-1)*2;
-            subplot(2,2,plotpos);
-            yyaxis left; % activate left Y axis for head pos.
-            plot(1:size(headData,2), nanmean(headData,1), ['ko']);
-            ylabel('norm Head height');
-            set(gca,'YColor', 'k')
-            
-            xlabel(xlabs{iGC});
-            hold on;
-            yyaxis right;
-            
-            xvec= linspace(1,size(headData,2),9*iGC);
-            bh=bar(xvec, varData, 'FaceColor', 'r');
-            bh.FaceAlpha = .2;
-            ylabel('Hand-Targ Var (m)');
-            set(gca,'YColor', 'r')
-            
-            %         set(gca, 'xtick',[]);
-            title([subjID ', n(' num2str(nsteps(iGC)) ')'])
-            set(gca, 'xtick',[ 0 100])
-        end % GC
-        set(gcf, 'color', 'w', 'units', 'normalized', 'position', [0 .1 .6 .8]);
-        
-        cd([datadir filesep 'Figures']);
-        
-        print('-dpng', ['PFX_gaiterror_' subjID]);
-    end %ppant
-end
+    
+ %for each ppant, plot the distribution of targ onset positions:
+ % pass in some details needed for accurate plots:
+ cfg=[];
+ cfg.subjIDs = subjIDs;
+ cfg.errortype = 'All';
+ cfg.datadir= datadir; % for orienting to figures folder
+ cfg.HeadData= GFX_headY; 
+ cfg.plotlevel = 'PFX'; 
+ % cycles through ppants, plots with correct labels.
+ plot_HandTargError(GFX_error, cfg);
 
+end
+%%    
+    
 
 %%%%%%%%%%%%%%%%%%%%%%
 %% print GroupFX

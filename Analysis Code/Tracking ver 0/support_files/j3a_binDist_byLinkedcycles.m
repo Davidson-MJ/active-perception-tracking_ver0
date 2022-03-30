@@ -13,19 +13,16 @@
 % clear all; close all;
 % datadir = 'C:\Users\vrlab\Documents\Matt\Projects\Output\walking_Ver0';
 cd([datadir filesep 'ProcessedData'])
-pfols= dir([pwd  filesep '*raw.mat']);
+pfols= dir([pwd  filesep '*summary_data.mat']);
 nsubs= length(pfols);
 Fs = 90;
-% Timevec = [1:500]*1/90;
-
-nPrac=5; % trial indices for skipping (no peaks/ troughs).
 
 resampSize = 200; % resample the gait cycle (DUAL CYCLE) to this many samps.
 %%
-for ippant = 1:nsubs
+for ippant = 1:10
     cd([datadir filesep 'ProcessedData'])    %%load data from import job.
     
-    load(pfols(ippant).name)
+    load(pfols(ippant).name, 'HeadPos', 'HandPos', 'trial_targetSummary')
     savename = pfols(ippant).name;
     disp(['Preparing j3a ' savename]);
     
@@ -33,15 +30,34 @@ for ippant = 1:nsubs
     % Per trial, extract gait samples (trough to trough), normalize along x
     % axis, and store various metrics.
     
-    TargetError_perTrialpergait_doubleGC =[];
     
-    for itrial=nPrac+1:size(Head_posmatrix,2)
+    for itrial=1:size(HeadPos,2)
+        if HeadPos(itrial).isPrac || HeadPos(itrial).isStationary
+            continue
+        end
+        %% subj specific trial rejection
+        skip=0;
+        rejTrials_trackingv1; %toggles 'skip' based on bad trial ID
+        if skip==1
+            continue
+        end
+     
+       
+        % quick classification:
+        if mod(itrial,2)~=0 % odd numbers
+            % Then descending on X, (i.e. first trajectory), more positive z values
+            % are left side of the body.
+            walkDir= 'IN';
+        elseif mod(itrial,2)==0 % even numbers
+            % ascending (the return trajectory), pos z values are RHS
+            walkDir= 'OUT';
+        end
         
         trs = HeadPos(itrial).Y_gait_troughs;
         pks = HeadPos(itrial).Y_gait_peaks;
-        Timevec = HeadPos(itrial).times;
+        trialTime = HeadPos(itrial).times;
         % plot gaits overlayed;
-        nSteps = length(pks) -2;
+      
         tmpPos = HeadPos(itrial).Y;
         tmpErr = squeeze(HandPos(itrial).dist2Targ);
         
@@ -51,26 +67,42 @@ for ippant = 1:nsubs
         tmpErr_Zdim = squeeze(HandPos(itrial).Zerror);
         %preAllocate for easy storage
         gaitD=[]; %struct
-        %     [gaitHeadY, gaitErr]= deal(zeros(length(trs), resampSize)); % we will normalize the vector lengths.
+        
         [gaitHeadY, gaitErr, gaitErrX, gaitErrY,gaitErrZ]= deal([]); % we will normalize the vector lengths.
         
-        for igait=1:length(pks)-2
+         for igait=1:length(pks)-2
             
             % now using 2 steps!
-            gaitsamps =[trs(igait):trs(igait+2)];
-            %% store HEAD data first:
+            gaitsamps =[trs(igait):trs(igait+2)-1]; % trough to frame before returning to ground.
+            gaitTimes = trialTime(gaitsamps);
+            
             % head Y data this gait:
             gaitDtmp = tmpPos(gaitsamps);
-            gaitD(igait).Head_Yraw = gaitDtmp;
             
+            %head sway (z) this gait:
+            gaitZtmp = tmpSway(gaitsamps);
+            ftis = trial_TargetSummary(itrial).gaitData(igait).peak;
+            if strcmp(ftis, 'LR')
+                gaitD(igait).peak = 'LRL';
+            else %Right ft starts
+            
+                gaitD(igait).peak = 'RLR';
+            end
             % normalize height between 0 and 1
             gaitDtmp_n = rescale(gaitDtmp);
-            gaitD(igait).Head_Ynorm = gaitDtmp_n;
-            %also resample along X vector:
-            gaitD(igait).Head_Y_resampled = imresize(gaitDtmp_n', [1,200]);
-            %also store in matrix for easy handling:
-            gaitHeadY(igait,:) = imresize(gaitDtmp_n', [1,200]);
             
+            % store key data in matrix for easy handling:
+            gaitHeadY(igait,:) = imresize(gaitDtmp_n', [1,resampSize]);
+            
+            %also store head Y info:
+            gaitD(igait).Head_Yraw = gaitDtmp;
+            gaitD(igait).Head_Ynorm = gaitDtmp_n;
+            gaitD(igait).Head_Y_resampled = imresize(gaitDtmp_n', [1,resampSize]);
+            gaitD(igait).gaitsamps = gaitsamps;
+            gaitD(igait).gaitTimes = gaitTimes;
+            gaitD(igait).gaitTimes_strt_fin = [gaitTimes(1) gaitTimes(end)];
+            
+          
             %% Store Error (hand-targ) next"
             for errsource = 1:4
                 switch errsource
@@ -91,57 +123,74 @@ for ippant = 1:nsubs
                 if errsource==1 % 3D error
                     gaitD(igait).Hand_Targ_err = errtmp;
                     %resampled
-                    gaitD(igait).Hand_Targ_err_resampled = imresize(errtmp, [1,200]);
-                    gaitErr(igait,:) = imresize(errtmp, [1,200]);
+                    gaitD(igait).Hand_Targ_err_resampled = imresize(errtmp, [1,resampSize]);
+                    gaitErr(igait,:) = imresize(errtmp, [1,resampSize]);
                 elseif errsource==2 % Xdim error
                     gaitD(igait).Hand_Targ_errXdim = errtmp;
                     %resampled
-                    gaitD(igait).Hand_Targ_errXdim_resampled = imresize(errtmp, [1,200]);
-                    gaitErrX(igait,:) = imresize(errtmp, [1,200]);
+                    gaitD(igait).Hand_Targ_errXdim_resampled = imresize(errtmp, [1,resampSize]);
+                    gaitErrX(igait,:) = imresize(errtmp, [1,resampSize]);
                     
                 elseif errsource==3 % Ydim error
                     gaitD(igait).Hand_Targ_errYdim = errtmp;
                     %resampled
-                    gaitD(igait).Hand_Targ_errYdim_resampled = imresize(errtmp, [1,200]);
-                    gaitErrY(igait,:) = imresize(errtmp, [1,200]);
+                    gaitD(igait).Hand_Targ_errYdim_resampled = imresize(errtmp, [1,resampSize]);
+                    gaitErrY(igait,:) = imresize(errtmp, [1,resampSize]);
                 elseif errsource==4 %Zdim
                     gaitD(igait).Hand_Targ_errZdim = errtmp;
                     %resampled
-                    gaitD(igait).Hand_Targ_errZdim_resampled = imresize(errtmp, [1,200]);
+                    gaitD(igait).Hand_Targ_errZdim_resampled = imresize(errtmp, [1,resampSize]);
                     gaitErrZ(igait,:) = imresize(errtmp, [1,200]);
                 end
                 
             end
             
         end % gait in trial.
-        TargetError_perTrialpergait_doubleGC(itrial).gaitError = gaitErr;
-        TargetError_perTrialpergait_doubleGC(itrial).gaitErrorXdim = gaitErrX;
-        TargetError_perTrialpergait_doubleGC(itrial).gaitErrorYdim = gaitErrY;
-        TargetError_perTrialpergait_doubleGC(itrial).gaitErrorZdim = gaitErrZ;
+        trial_targetSummary(itrial).gaitError_doubGC = gaitErr;
+        trial_targetSummary(itrial).gaitErrorXdim_doubGC = gaitErrX;
+        trial_targetSummary(itrial).gaitErrorYdim_doubGC = gaitErrY;
+        trial_targetSummary(itrial).gaitErrorZdim_doubGC = gaitErrZ;
          
-        TargetError_perTrialpergait_doubleGC(itrial).gaitHeadY= gaitHeadY;
+        trial_targetSummary(itrial).gaitHeadY_doubGC= gaitHeadY;
         
+
         % save this gait info per trial in structure as well.
-        HandPos(itrial).DUALgaitData = gaitD;
+        HandPos(itrial).gaitData_doubGC = gaitD;
         
     end %trial
     
     %% for all trials, compute the average error and head pos per time point
     ntrials = size(HeadPos,2);
     % plot average error over gait cycle, first averaging within trials.
-    [PFX_err_doubleGC,PFX_errXdim_doubleGC, PFX_errYdim_doubleGC,PFX_errZdim_doubleGC, PFX_headY_doubleGC]= deal(zeros(ntrials,resampSize));
-    [PFX_binnedVar_pertrialsteps_doubleGC]= deal(zeros(ntrials,18)); % also plot the binned variance
-    PFX_allsteps_binnedErr_doubleGC=[];
+    [PFX_err_doubleGC,...
+    PFX_errXdim_doubleGC,...
+    PFX_errYdim_doubleGC,...
+    PFX_errZdim_doubleGC, ...
+    PFX_headY_doubleGC]= deal(nan(ntrials,resampSize));
+       
     stepCount=1;
-    for itrial= nPrac+1:size(TargetError_perTrialpergait_doubleGC,2)
+    [trialIdx,walkSpeed, targetSpeed,trialType]=deal(NaN);
+    
+    PFX_trialinfo = table(trialIdx, walkSpeed,targetSpeed,trialType);
+    
+    for itrial= 1:size(HeadPos,2)
+         if HeadPos(itrial).isPrac || HeadPos(itrial).isStationary
+            continue
+        end
+        %% subj specific trial rejection
+        skip=0;
+        rejTrials_trackingv1; %toggles 'skip' based on bad trial ID
+        if skip==1
+            continue
+        end
         
-        % omit first and last gaitcycle from each trial
-        TrialError= TargetError_perTrialpergait_doubleGC(itrial).gaitError([3:(end-2)],:);
-        TrialErrorXdim= TargetError_perTrialpergait_doubleGC(itrial).gaitErrorXdim([3:(end-2)],:);
-        TrialErrorYdim= TargetError_perTrialpergait_doubleGC(itrial).gaitErrorYdim([3:(end-2)],:);
-        TrialErrorZdim= TargetError_perTrialpergait_doubleGC(itrial).gaitErrorZdim([3:(end-2)],:);
+        % omit first and last gaitcycles from each trial
+        TrialError= trial_targetSummary(itrial).gaitError_doubGC([3:(end-2)],:);
+        TrialErrorXdim= trial_targetSummary(itrial).gaitErrorXdim_doubGC([3:(end-2)],:);
+        TrialErrorYdim= trial_targetSummary(itrial).gaitErrorYdim_doubGC([3:(end-2)],:);
+        TrialErrorZdim= trial_targetSummary(itrial).gaitErrorZdim_doubGC([3:(end-2)],:);
         
-        TrialY= TargetError_perTrialpergait_doubleGC(itrial).gaitHeadY([3:(end-2)],:);
+        TrialY= trial_targetSummary(itrial).gaitHeadY_doubGC([3:(end-2)],:);
         
         PFX_err_doubleGC(itrial,:) = mean(TrialError,1);
         
@@ -151,27 +200,21 @@ for ippant = 1:nsubs
         
         PFX_headY_doubleGC(itrial,:)= mean(TrialY,1);
         
-        %may want to instead calculate variance across all steps in exp,
-        %without sub averaging.
-        
-        PFX_allsteps_binnedErr_doubleGC = [PFX_allsteps_binnedErr_doubleGC; TrialError];
-        
+        % also store data in table for easy access:
+        PFX_trialinfo.trialIdx(itrial) = itrial;
+        PFX_trialinfo.walkSpeed(itrial) = HeadPos(itrial).walkSpeed;
+        PFX_trialinfo.targetSpeed(itrial) = HeadPos(itrial).targSpeed;
+        PFX_trialinfo.trialType(itrial) = HeadPos(itrial).trialType;
         
     end % trial
     %%
-    %calculate binned variance across entire experiment.
-    PFX_allsteps_binnedVar_doubleGC=[];
-    for ibin= 1:18
-        idx = [1:10] + (ibin-1)*10;
-        tmp = PFX_allsteps_binnedErr_doubleGC(:,idx);
-        PFX_allsteps_binnedVar_doubleGC(ibin) = mean(var(tmp));
-    end
+    
 
     %%
     disp(['saving targ error per stride cycle gait...' savename])
-    
-    save(savename, 'HandPos', 'TargetError_perTrialpergait_doubleGC',...
-        'PFX_err_doubleGC', 'PFX_headY_doubleGC','PFX_errZdim_doubleGC', 'PFX_allsteps_binnedErr_doubleGC',...
-        'PFX_allsteps_binnedVar_doubleGC', '-append');
+    PFX_trialinfo_doubgc = PFX_trialinfo;
+    save(savename, 'HandPos', 'trial_targetSummary',...
+        'PFX_trialinfo_doubgc','PFX_err_doubleGC', 'PFX_headY_doubleGC','PFX_errZdim_doubleGC', ...
+        'PFX_errXdim_doubleGC', 'PFX_errYdim_doubleGC', '-append');
 end % subject
 

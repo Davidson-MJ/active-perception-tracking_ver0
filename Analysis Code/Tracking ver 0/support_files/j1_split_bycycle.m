@@ -19,7 +19,7 @@ pkheight = 0.0002; % (m)
 figure(1); clf;
 set(gcf, 'units', 'normalized', 'position', [0,0, .9, .9], 'color', 'w', 'visible', 'off');
 %%
-for ippant = 2%:nsubs
+for ippant = 1:10;%nsubs
     cd([datadir filesep 'ProcessedData'])
    
 %     pkdist = participantstepwidths(ippant);
@@ -194,10 +194,11 @@ for ippant = 2%:nsubs
                     %% retain minimum as true trough.
                     if length(earlyexist)>1
                         headpos = trialD(locs_trtr(earlyexist));
-                        % remove maximum.
-                        [~,i] = max(headpos);
-                        % remove from troughs:
-                        locs_trtr(earlyexist(i))=[];
+                       [~,idx] = min(headpos);
+                           tmp= zeros(1, length(headpos));
+                           tmp(idx)=1;
+                           
+                           locs_trtr(~tmp)=[]; 
                     end
                     
                     
@@ -208,15 +209,17 @@ for ippant = 2%:nsubs
                           %later troughs:
                         laterexist = find(locs_trtr> pktmp);
                         
-                        locs_trtr_copy = locs_trtr;
-                        while length(laterexist)>1
-                             headpos = trialD(locs_trtr_copy(laterexist));
-                        % remove maximum.
-                        [~,i] = max(headpos);
-                        % remove from troughs:
-                        locs_trtr(laterexist(i))=[];
-                        laterexist(i)=[];
+                        % if more than one trough remaining, retain only
+                        % the minimum value as the true trough.                   
+                        if length(laterexist)>1
+                           allpoints =  trialD(locs_trtr(laterexist));
+                           [~,idx] = min(allpoints);
+                           tmp= zeros(1, length(allpoints));
+                           tmp(idx)=1;
+                           
+                           locs_trtr(~tmp)=[]; 
                         end
+                            
                     end
                     
                     

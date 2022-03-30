@@ -4,10 +4,14 @@
 %%%%%% TRACKING TASK version %%%%%%
 %frame by frame first:
 %Mac:
-%PC:
-datadir='C:\Users\User\Documents\matt\GitHub\active-perception-tracking_ver0\Analysis Code\Tracking ver 0\Raw_data';
+%  datadir='/Users/matthewdavidson/Documents/GitHub/active-perception-tracking_ver0/Analysis Code/Tracking ver 0/Raw_data';
+%mac-HD
+datadir = '/Volumes/WHITEHD_TB/Tracking ver 0/Raw_data';
+ %PC:
+% datadir='C:\Users\User\Documents\matt\GitHub\active-perception-tracking_ver0\Analysis Code\Tracking ver 0\Raw_data';
 %PC-HD
 % datadir = 'E:\Tracking ver 0\Raw_data';%%
+
 
 cd(datadir)
 pfols = dir([pwd filesep '*framebyframe.csv']);
@@ -17,7 +21,7 @@ nsubs= length(pfols);
 tr= table([1:length(pfols)]',{pfols(:).name}' );
 disp(tr)
 %% Per csv file, import and wrangle into Matlab Structures, and data matrices:
-for ippant = 1:nsubs
+for ippant = 1:10;%nsubs
    %%
     cd(datadir)
    
@@ -116,8 +120,11 @@ for ippant = 1:nsubs
         HandPos_R(itrial).Z = Data(intersect(hn_Rz, trial_rows));
         HandPos_R(itrial).times = Times(intersect(hn_Rz, trial_rows));
         
-        
-        
+%         disp([length(HeadPos(itrial).times); length(HandPos_R(itrial).times)])
+
+        if length(HeadPos(itrial).times) ~= length(HandPos_R(itrial).times)
+        disp(['debug ' subjID ' trial ' num2str(itrial)]);
+        end
     end
     
     

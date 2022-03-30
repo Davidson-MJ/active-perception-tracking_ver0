@@ -10,16 +10,16 @@
 
 % clear all; close all;
 cd([datadir filesep 'ProcessedData'])
-pfols= dir([pwd  filesep '*raw.mat']);
+pfols= dir([pwd  filesep '*summary_data.mat']);
 nsubs= length(pfols);
 %show ppant list:
 tr= table([1:length(pfols)]',{pfols(:).name}' );
 disp(tr)
 %%
-for ippant = 1:nsubs
+for ippant = 1:10
     cd([datadir filesep 'ProcessedData'])    %%load data from import job.
     load(pfols(ippant).name, ...
-        'HeadPos', 'trial_TargetSummary', 'subjID');
+        'HeadPos', 'HandPos', 'trial_TargetSummary', 'subjID');
     savename = pfols(ippant).name;
     disp(['Preparing j3 ' savename]);
     
@@ -193,15 +193,17 @@ for ippant = 1:nsubs
             
          
         end % gait in trial.
-        TargetError_perTrialpergait(itrial).gaitError = gaitErr;
-        TargetError_perTrialpergait(itrial).gaitErrorXdim = gaitErrX;
-        TargetError_perTrialpergait(itrial).gaitErrorYdim = gaitErrY;
-        TargetError_perTrialpergait(itrial).gaitErrorZdim = gaitErrZ;
+        trial_TargetSummary(itrial).gaitError = gaitErr;
+        trial_TargetSummary(itrial).gaitErrorXdim = gaitErrX;
+        trial_TargetSummary(itrial).gaitErrorYdim = gaitErrY;
+        trial_TargetSummary(itrial).gaitErrorZdim = gaitErrZ;
         
-        TargetError_perTrialpergait(itrial).gaitHeadY= gaitHeadY;
+        trial_TargetSummary(itrial).gaitHeadY= gaitHeadY;
+        trial_TargetSummary(itrial).gaitData= gaitD;
         
         % save this gait info per trial in structure as well.
         HeadPos(itrial).gaitData = gaitD;
+        
         
     end %trial
     
@@ -213,11 +215,10 @@ for ippant = 1:nsubs
     
     % plot average error over gait cycle, first averaging within trials.
     [PFX_err,PFX_errXdim, PFX_errYdim,PFX_errZdim, PFX_headY,PFX_headZ]= deal(zeros(ntrials,100));
-%     
-%     [PFX_pertrial_binnedVar]= deal(zeros(ntrials,9)); % also plot the binned variance
-%     
-%     PFX_allsteps_binnedErr=[];
+
+    [trialIdx,walkSpeed, targetSpeed,trialType]=deal(NaN);
     
+    PFX_trialinfo = table(trialIdx, walkSpeed,targetSpeed,trialType);
     for itrial= 1:size(HeadPos,2)
         if HeadPos(itrial).isPrac ||  HeadPos(itrial).isStationary
             continue
@@ -236,15 +237,14 @@ for ippant = 1:nsubs
        % omit first and last gaitcycles from each trial?
        usegaits = allgaits(3:end-2);
         
-        %data of interest is the resampled gait (1:100) with a position of
-        %the targ (now classified as correct or no).
+        %data of interest is the resampled gait (1:100)
         TrialY= trial_TargetSummary(itrial).gaitHeadY(usegaits,:);       
         
         % omit first 2 and last 2 gaitcycle from each trial
-        TrialError= TargetError_perTrialpergait(itrial).gaitError(usegaits,:);
-        TrialErrorXdim= TargetError_perTrialpergait(itrial).gaitErrorXdim(usegaits,:);
-        TrialErrorYdim= TargetError_perTrialpergait(itrial).gaitErrorYdim(usegaits,:);
-        TrialErrorZdim= TargetError_perTrialpergait(itrial).gaitErrorZdim(usegaits,:);
+        TrialError= trial_TargetSummary(itrial).gaitError(usegaits,:);
+        TrialErrorXdim= trial_TargetSummary(itrial).gaitErrorXdim(usegaits,:);
+        TrialErrorYdim= trial_TargetSummary(itrial).gaitErrorYdim(usegaits,:);
+        TrialErrorZdim= trial_TargetSummary(itrial).gaitErrorZdim(usegaits,:);
         
         
         PFX_err(itrial,:) = mean(TrialError,1);
@@ -253,8 +253,12 @@ for ippant = 1:nsubs
         PFX_errZdim(itrial,:) = mean(TrialErrorZdim,1);
         PFX_headY(itrial,:)= mean(TrialY,1);
         
-%         PFX_allsteps_binnedErr = [PFX_allsteps_binnedErr; TrialError];
         
+        % also store data in table for easy access:
+        PFX_trialinfo.trialIdx(itrial) = itrial;
+        PFX_trialinfo.walkSpeed(itrial) = HeadPos(itrial).walkSpeed;
+        PFX_trialinfo.targetSpeed(itrial) = HeadPos(itrial).targSpeed;
+        PFX_trialinfo.trialType(itrial) = HeadPos(itrial).trialType;
         
     end % all trials
     
@@ -268,8 +272,8 @@ for ippant = 1:nsubs
     % plot(xvec, PFX_binnedVartotal);
     %%
     disp(['saving targ error per gait...' savename])
-    save(savename, 'HeadPos', 'TargetError_perTrialpergait',...
-        'PFX_err', 'PFX_errXdim','PFX_errYdim','PFX_errZdim','PFX_headY', 'PFX_allsteps_binnedErr',...
+    save(savename, 'HeadPos', 'trial_TargetSummary',...
+        'PFX_trialinfo','PFX_err', 'PFX_errXdim','PFX_errYdim','PFX_errZdim','PFX_headY',...
         '-append');
 end % subject
 
