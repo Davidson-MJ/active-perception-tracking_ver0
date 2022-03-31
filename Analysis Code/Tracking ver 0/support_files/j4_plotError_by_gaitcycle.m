@@ -4,45 +4,64 @@
 
 cd([datadir filesep 'ProcessedData'])
 
-pfols= dir([pwd  filesep '*summary_data.mat']);
+pfols= dir([pwd  filesep '*PFX_data.mat']);
 nsubs= length(pfols);
 
 job.concatGFX=1;
-job.plotPFX=1; % single and dual gait cycles.
-job.plotGFX=0; %
+job.plotPFX=0; % single and dual gait cycles.
+job.plotGFX=1; %
+job.plotGFX_sepdimensions= 0; % splits error by source (X, Y, or Z dimension).
+
+%job.plotmeanerrror + stderror (collapsed across gaitcycle points). show
+%condition differences. (n=20).
 
 %%%%%%%%%%%%%%%%%%%%%%
 %% concat across subjs
 %%%%%%%%%%%%%%%%%%%%%%
 if job.concatGFX
-    
+    %%
     %Structures for data:
     [GFX_error,GFX_headY] = deal([]); % we've resampled to 100 points.
     
     subjIDs={};
-    for isub = 1:nsubs
+    for isub = 1:10%nsubs
         cd([datadir filesep 'ProcessedData'])
         %%load data from import job.
         load(pfols(isub).name);
+        %%
         for itrialtype = 1:4 %% save each condition separately.
         
             % per trial type, only store the relevant trials.
             usetrials= find(PFX_trialinfo.trialType == itrialtype);
             
-            
-            %single gait cycle first
-        GFX_error(itrialtype,isub).err = nanmean(PFX_err(usetrials,:),1);        
+            % take absolute, since we are interested in dist from target.
+            %single gait cycle first            
+        GFX_error(itrialtype,isub).err = nanmean(PFX_err(usetrials,:),1);
+         GFX_error(itrialtype,isub).errSTD = nanmean(PFX_errSTD(usetrials,:),1);
+        GFX_error(itrialtype,isub).errXdim = nanmean(PFX_errXdim(usetrials,:),1);           
+        GFX_error(itrialtype,isub).errYdim = nanmean(PFX_errYdim(usetrials,:),1);            
+        GFX_error(itrialtype,isub).errZdim = nanmean(PFX_errZdim(usetrials,:),1);    
         GFX_headY(itrialtype,isub).gc = nanmean(PFX_headY(usetrials,:),1);
         
         
         %double gait cycle:
-        GFX_error(itrialtype,isub).err_doubgc= nanmean(PFX_err_doubleGC(usetrials,:),1);
+        GFX_error(itrialtype,isub).err_doubgc= nanmean(PFX_err_doubleGC(usetrials,:),1); % mean distance over gaits
+         GFX_error(itrialtype,isub).errSTD_doubgc = nanmean(PFX_errSTD_doubleGC(usetrials,:),1); % variance in distance over gaits (calc. within trial)
+        GFX_error(itrialtype,isub).errXdim_doubgc= nanmean(PFX_errXdim_doubleGC(usetrials,:),1);
+        GFX_error(itrialtype,isub).errYdim_doubgc= nanmean(PFX_errYdim_doubleGC(usetrials,:),1);
+        GFX_error(itrialtype,isub).errZdim_doubgc= nanmean(PFX_errZdim_doubleGC(usetrials,:),1);
+        
         GFX_headY(itrialtype,isub).doubgc = nanmean(PFX_headY_doubleGC(usetrials,:),1);
         
         %store trial description also:
         GFX_error(itrialtype,isub).trialType = itrialtype;
         GFX_error(itrialtype,isub).walkSpeed = PFX_trialinfo.walkSpeed(usetrials(1));
         GFX_error(itrialtype,isub).targetSpeed = PFX_trialinfo.targetSpeed(usetrials(1));
+        
+        
+        
+        %% also calculate binned versions (for variance data?).
+        
         
         
         subjIDs{isub} = ppant;
@@ -62,12 +81,12 @@ end % job concat
 %%%%%%%%%%%%%%%%%%%%%%
 %%
 if job.plotPFX
-    
+    %%
  %for each ppant, plot the distribution of targ onset positions:
  % pass in some details needed for accurate plots:
  cfg=[];
  cfg.subjIDs = subjIDs;
- cfg.errortype = 'All';
+ cfg.errortype = 'mean'; % 'STD'
  cfg.datadir= datadir; % for orienting to figures folder
  cfg.HeadData= GFX_headY; 
  cfg.plotlevel = 'PFX'; 
@@ -82,59 +101,31 @@ end
 %% print GroupFX
 %%%%%%%%%%%%%%%%%%%%%%
 if job.plotGFX
-    
-    figure(1); clf;
-    
-    for iGC=1:2 % plot both gait cycle analyses (single and dual).
-        if iGC==1
-            headData = GFX_headY;
-            errData = GFX_err;
-            %
-            varData = GFX_errVar;
-        else
-            headData = GFX_headY_dbGC;%
-            errData= GFX_err_dbGC;
-            varData = GFX_errVar_dbGC;
-        end
-        nsubs = size(headData,1);
-        %% head pos and error
-        plotpos= 1+(iGC-1)*2;
-        subplot(2,2,plotpos)
-        yyaxis left; % activate left Y axis for head pos.
-        plot(1:size(headData,2), mean(headData,1), ['ko']);
-        ylabel('norm Head height');
-        hold on;
-        yyaxis right;
-        mP = squeeze(mean(errData,1));
-        stE= CousineauSEM(errData);
-        sh= shadedErrorBar(1:length(headData), mP, stE, 'r');
-        %     plot(1:100, mean(GFX_err,1), 'linew', 2);
-        ylabel('Hand-Targ Error (mm)');
-        set(gca, 'xtick',[]);
-        title(['GFX  nsubs = ' num2str(nsubs)])
-        %% head pos and variance
-        plotpos= 2+(iGC-1)*2;
-        subplot(2,2,plotpos)
-        yyaxis left;
-        plot(1:size(headData,2), mean(headData,1), ['ko']);
-        ylabel('norm Head height');
-        hold on;
-        
-        yyaxis right;
-        
-        xvec = linspace(1,length(headData),9*iGC);
-        bh=bar(xvec, mean(varData,1));
-        stE = CousineauSEM(varData);
-        hold on;
-        errorbar(xvec, mean(varData,1), stE);
-        bh.FaceAlpha= .2;
-        ylabel('Hand-Targ Error Var (mm)');
-        set(gca, 'xtick',[]);
-        title(['GFX  nsubs = ' num2str(nsubs)])
-        %%
-        %print
-        cd([datadir filesep 'Figures']);
-        set(gcf, 'color', 'w', 'units', 'normalized', 'position', [0 .1 .6 .8]);
-    end % both Gait cycles
-    print('-dpng', ['GFX_gaiterror']);
+    %%
+    %for each ppant, plot the distribution of targ onset positions:
+ % pass in some details needed for accurate plots:
+ cfg=[];
+ cfg.subjIDs = subjIDs;
+ cfg.errortype = 'std'; % std
+ cfg.datadir= datadir; % for orienting to figures folder
+ cfg.HeadData= GFX_headY; 
+ cfg.plotlevel = 'GFX'; 
+ % cycles through ppants, plots with correct labels.
+ plot_HandTargError(GFX_error, cfg);
+
+end
+
+if job.plotGFX_sepdimensions
+    %%
+    %for each ppant, plot the distribution of targ onset positions:
+ % pass in some details needed for accurate plots:
+ cfg=[];
+ cfg.subjIDs = subjIDs;
+ cfg.errortype = 'Separate'; % 'overlayed'
+ cfg.datadir= datadir; % for orienting to figures folder
+ cfg.HeadData= GFX_headY; 
+ cfg.plotlevel = 'GFX'; 
+ % cycles through ppants, plots with correct labels.
+ plot_HandTargError_sepdimensions(GFX_error, cfg);
+
 end

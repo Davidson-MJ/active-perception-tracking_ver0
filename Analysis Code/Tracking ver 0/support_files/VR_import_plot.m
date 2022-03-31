@@ -6,9 +6,9 @@
 %Mac:
 %  datadir='/Users/matthewdavidson/Documents/GitHub/active-perception-tracking_ver0/Analysis Code/Tracking ver 0/Raw_data';
 %mac-HD
-datadir = '/Volumes/WHITEHD_TB/Tracking ver 0/Raw_data';
+% datadir = '/Volumes/WHITEHD_TB/Tracking ver 0/Raw_data';
  %PC:
-% datadir='C:\Users\User\Documents\matt\GitHub\active-perception-tracking_ver0\Analysis Code\Tracking ver 0\Raw_data';
+datadir='C:\Users\User\Documents\matt\GitHub\active-perception-tracking_ver0\Analysis Code\Tracking ver 0\Raw_data';
 %PC-HD
 % datadir = 'E:\Tracking ver 0\Raw_data';%%
 
@@ -21,7 +21,7 @@ nsubs= length(pfols);
 tr= table([1:length(pfols)]',{pfols(:).name}' );
 disp(tr)
 %% Per csv file, import and wrangle into Matlab Structures, and data matrices:
-for ippant = 1:10;%nsubs
+for ippant = 1:10
    %%
     cd(datadir)
    
@@ -46,7 +46,7 @@ for ippant = 1:10;%nsubs
     %read table
     opts = detectImportOptions(filename,'NumHeaderLines',0);
     T = readtable(filename,opts);
-    ppant = T.participant{1};
+    ppant = subjID(1:4);
     disp(['Preparing participant ' ppant]);
     
     % simple plot of target position over time.

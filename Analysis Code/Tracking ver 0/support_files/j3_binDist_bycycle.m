@@ -27,8 +27,7 @@ for ippant = 1:10
     % Per trial, extract gait samples (trough to trough), normalize along x
     % axis, and store various metrics.
     
-    TargetError_perTrialpergait =[];
-    
+        
     for itrial=1:size(HeadPos,2)
         if HeadPos(itrial).isPrac || HeadPos(itrial).isStationary
             continue
@@ -214,7 +213,7 @@ for ippant = 1:10
     ntrials = size(HeadPos,2) - nprac;
     
     % plot average error over gait cycle, first averaging within trials.
-    [PFX_err,PFX_errXdim, PFX_errYdim,PFX_errZdim, PFX_headY,PFX_headZ]= deal(zeros(ntrials,100));
+    [PFX_err,PFX_errXdim, PFX_errYdim,PFX_errZdim, PFX_headY,PFX_errSTD]= deal(zeros(ntrials,100));
 
     [trialIdx,walkSpeed, targetSpeed,trialType]=deal(NaN);
     
@@ -248,9 +247,11 @@ for ippant = 1:10
         
         
         PFX_err(itrial,:) = mean(TrialError,1);
+        PFX_errSTD(itrial,:) = std(TrialError); % compute the variance across gaits.
         PFX_errXdim(itrial,:) = mean(TrialErrorXdim,1);
         PFX_errYdim(itrial,:) = mean(TrialErrorYdim,1);
         PFX_errZdim(itrial,:) = mean(TrialErrorZdim,1);
+        
         PFX_headY(itrial,:)= mean(TrialY,1);
         
         
@@ -272,8 +273,13 @@ for ippant = 1:10
     % plot(xvec, PFX_binnedVartotal);
     %%
     disp(['saving targ error per gait...' savename])
-    save(savename, 'HeadPos', 'trial_TargetSummary',...
-        'PFX_trialinfo','PFX_err', 'PFX_errXdim','PFX_errYdim','PFX_errZdim','PFX_headY',...
-        '-append');
+    %store new data.
+    save(pfols(ippant).name, ...
+        'HeadPos','trial_TargetSummary', '-append');
+    
+    %split the file to avoid git hub LFS
+    savename2 = [subjID  '_PFX_data'];
+    save(savename2, ...
+        'PFX_trialinfo','PFX_err', 'PFX_errSTD','PFX_errXdim','PFX_errYdim','PFX_errZdim','PFX_headY','ppant', 'subjID');
 end % subject
 

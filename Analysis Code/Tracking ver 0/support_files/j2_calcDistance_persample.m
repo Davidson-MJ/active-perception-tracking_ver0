@@ -18,13 +18,15 @@ nsubs= length(pfols);
 tr= table([1:length(pfols)]',{pfols(:).name}' );
 disp(tr)
 %%
-for isub = 1:10%length(pfols)
+for isub = 1:20%length(pfols)
     cd([datadir filesep 'ProcessedData'])
     %%load data from import job.
     load(pfols(isub).name, 'HeadPos', 'HandPos_L', 'HandPos_R', 'TargPos','subjID');
     savename = pfols(isub).name;
     disp(['Preparing j2 ' savename]);
-    
+    % Make sure to use the correct (dominant) hand for calculating error.
+    % note that for some subjects, due to controller malfunction, the
+    % labels had to be swapped (empty battery half way through).
     if strcmp(subjID(4), 'R')
         HandPos = HandPos_R;
         disp(['Using Right hand for ' subjID]);
@@ -50,9 +52,9 @@ for isub = 1:10%length(pfols)
             %        Hand_Targ_dist(itrial,isamp) =norm(A-B);
             
             HandPos(itrial).dist2Targ(isamp) = norm(A-B);
-            HandPos(itrial).Yerror(isamp) = Yerr;
-            HandPos(itrial).Xerror(isamp) = Xerr;
-            HandPos(itrial).Zerror(isamp) = Zerr;
+            HandPos(itrial).Yerror(isamp) = abs(Yerr);
+            HandPos(itrial).Xerror(isamp) = abs(Xerr);
+            HandPos(itrial).Zerror(isamp) = abs(Zerr);
         end
     end % itrial
     
@@ -66,6 +68,9 @@ for isub = 1:10%length(pfols)
     pcount=1; figcount=1;
     clf
     for itrial = 1:size(HeadPos,2)
+        if HeadPos(itrial).isPrac
+            continue
+        end
         if itrial==16 || pcount ==16
             %print that figure, and reset trial count.
             pcount=1;

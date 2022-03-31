@@ -22,7 +22,7 @@ resampSize = 200; % resample the gait cycle (DUAL CYCLE) to this many samps.
 for ippant = 1:10
     cd([datadir filesep 'ProcessedData'])    %%load data from import job.
     
-    load(pfols(ippant).name, 'HeadPos', 'HandPos', 'trial_targetSummary')
+    load(pfols(ippant).name, 'HeadPos', 'subjID','HandPos', 'trial_TargetSummary')
     savename = pfols(ippant).name;
     disp(['Preparing j3a ' savename]);
     
@@ -80,7 +80,6 @@ for ippant = 1:10
             gaitDtmp = tmpPos(gaitsamps);
             
             %head sway (z) this gait:
-            gaitZtmp = tmpSway(gaitsamps);
             ftis = trial_TargetSummary(itrial).gaitData(igait).peak;
             if strcmp(ftis, 'LR')
                 gaitD(igait).peak = 'LRL';
@@ -166,7 +165,7 @@ for ippant = 1:10
     PFX_errXdim_doubleGC,...
     PFX_errYdim_doubleGC,...
     PFX_errZdim_doubleGC, ...
-    PFX_headY_doubleGC]= deal(nan(ntrials,resampSize));
+    PFX_headY_doubleGC,PFX_errSTD_doubleGC]= deal(nan(ntrials,resampSize));
        
     stepCount=1;
     [trialIdx,walkSpeed, targetSpeed,trialType]=deal(NaN);
@@ -193,6 +192,7 @@ for ippant = 1:10
         TrialY= trial_targetSummary(itrial).gaitHeadY_doubGC([3:(end-2)],:);
         
         PFX_err_doubleGC(itrial,:) = mean(TrialError,1);
+        PFX_errSTD_doubleGC(itrial,:) = std(TrialError);
         
         PFX_errXdim_doubleGC(itrial,:) = mean(TrialErrorXdim,1);
         PFX_errYdim_doubleGC(itrial,:) = mean(TrialErrorYdim,1);
@@ -213,8 +213,12 @@ for ippant = 1:10
     %%
     disp(['saving targ error per stride cycle gait...' savename])
     PFX_trialinfo_doubgc = PFX_trialinfo;
-    save(savename, 'HandPos', 'trial_targetSummary',...
-        'PFX_trialinfo_doubgc','PFX_err_doubleGC', 'PFX_headY_doubleGC','PFX_errZdim_doubleGC', ...
+     save(pfols(ippant).name, ...
+        'HeadPos','trial_TargetSummary', '-append');
+    
+    savename2= [subjID '_PFX_data'];
+    save(savename2, ...
+        'PFX_trialinfo_doubgc','PFX_err_doubleGC', 'PFX_errSTD_doubleGC','PFX_headY_doubleGC','PFX_errZdim_doubleGC', ...
         'PFX_errXdim_doubleGC', 'PFX_errYdim_doubleGC', '-append');
 end % subject
 
