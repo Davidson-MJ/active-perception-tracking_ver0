@@ -20,7 +20,7 @@ pkheight = 0.002; % (m)
 figure(1); clf;
 set(gcf, 'units', 'normalized', 'position', [0,0, .9, .9], 'color', 'w', 'visible', 'off');
 %%
-for ippant = 1:10%11:20%nsubs
+for ippant = 12:nsubs
     cd([datadir filesep 'ProcessedData'])
    
 %     pkdist = participantstepwidths(ippant);

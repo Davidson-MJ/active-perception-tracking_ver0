@@ -19,7 +19,7 @@ Fs = 90;
 
 resampSize = 200; % resample the gait cycle (DUAL CYCLE) to this many samps.
 %%
-for ippant = 1:10
+for ippant = 10:11%:nsubs
     cd([datadir filesep 'ProcessedData'])    %%load data from import job.
     
     load(pfols(ippant).name, 'HeadPos', 'subjID','HandPos', 'trial_TargetSummary')

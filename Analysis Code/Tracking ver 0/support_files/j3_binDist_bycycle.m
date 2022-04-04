@@ -16,7 +16,7 @@ nsubs= length(pfols);
 tr= table([1:length(pfols)]',{pfols(:).name}' );
 disp(tr)
 %%
-for ippant = 1:10
+for ippant = 11%:nsubs
     cd([datadir filesep 'ProcessedData'])    %%load data from import job.
     load(pfols(ippant).name, ...
         'HeadPos', 'HandPos', 'trial_TargetSummary', 'subjID');

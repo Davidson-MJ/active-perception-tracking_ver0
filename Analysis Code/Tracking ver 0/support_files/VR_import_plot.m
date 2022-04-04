@@ -21,7 +21,7 @@ nsubs= length(pfols);
 tr= table([1:length(pfols)]',{pfols(:).name}' );
 disp(tr)
 %% Per csv file, import and wrangle into Matlab Structures, and data matrices:
-for ippant = 1:10
+for ippant = 20:nsubs
    %%
     cd(datadir)
    

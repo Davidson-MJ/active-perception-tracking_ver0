@@ -18,7 +18,7 @@ nsubs= length(pfols);
 tr= table([1:length(pfols)]',{pfols(:).name}' );
 disp(tr)
 %%
-for isub = 1:20%length(pfols)
+for isub = 26%1:nsubs
     cd([datadir filesep 'ProcessedData'])
     %%load data from import job.
     load(pfols(isub).name, 'HeadPos', 'HandPos_L', 'HandPos_R', 'TargPos','subjID');
@@ -27,13 +27,13 @@ for isub = 1:20%length(pfols)
     % Make sure to use the correct (dominant) hand for calculating error.
     % note that for some subjects, due to controller malfunction, the
     % labels had to be swapped (empty battery half way through).
-    if strcmp(subjID(4), 'R')
         HandPos = HandPos_R;
+    if strcmp(subjID(4), 'R')
         disp(['Using Right hand for ' subjID]);
     else
-        HandPos = HandPos_L;
-        disp(['Using LEFT hand for ' subjID]);
-        error('check code');
+%         HandPos = HandPos_R;
+        disp(['Using Right hand for ' subjID '-Lhanded']);
+
     end
     %%
     Hand_Targ_dist = [];
@@ -68,9 +68,7 @@ for isub = 1:20%length(pfols)
     pcount=1; figcount=1;
     clf
     for itrial = 1:size(HeadPos,2)
-        if HeadPos(itrial).isPrac
-            continue
-        end
+      
         if itrial==16 || pcount ==16
             %print that figure, and reset trial count.
             pcount=1;
@@ -95,7 +93,7 @@ for isub = 1:20%length(pfols)
         plot(Timevec, HandPos(itrial).dist2Targ, 'linew', 2);
         ylabel('raw Error')
         % show the window retained:
-        if ~HeadPos(itrial).isStationary
+        if ~HeadPos(itrial).isStationary && ~HeadPos(itrial).isPrac
             trs = HeadPos(itrial).Y_gait_troughs;
             maxE = max(HandPos(itrial).dist2Targ);
             xp = [0 0 Timevec(trs(3)) Timevec(trs(3))]; % show up to 4th trough, since that is excluded as start point.

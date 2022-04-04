@@ -44,26 +44,27 @@ if strcmp(cfg.plotlevel, 'PFX')
                     ppantData(1,:)= GFX_headY(itrialtype,ippant).doubgc;
                     
                     if strcmp(cfg.errortype, 'mean')
-                        ppantData(2,:)= dataIN(itrialtype,ippant).errSTD;
+                        ppantData(2,:)= dataIN(itrialtype,ippant).err_doubgc;
                     elseif strcmp(cfg.errortype, 'std')
                         ppantData(2,:)= dataIN(itrialtype,ippant).errSTD_doubgc;
                     end
                     
                                         
                 end
-                ylabels = {'norm Head height',['Hand-Targ error (m) ' cfg.errortype]};
+
+                ylabels = {'norm Head height',[cfg.errortype  ' Hand-Targ error [m] ']};
                 %%
                 for iplotdata=1:2
                     subplot(2,2,iplotdata + 2*(nGaits_toPlot-1))
                     hold on;
-                    % if comparing variance, fast and slow targs need to be
-                    % on different axes:
-                    if iplotdata==2 && strcmp(cfg.errortype, 'std') && mod(itrialtype,2)==0
-                        yyaxis left
-                  
-                    elseif iplotdata==2 && strcmp(cfg.errortype, 'std') && mod(itrialtype,2)~=0
-                        yyaxis right
-                    end
+%                     % if comparing variance, fast and slow targs need to be
+%                     % on different axes:
+%                     if iplotdata==2 && strcmp(cfg.errortype, 'std') && mod(itrialtype,2)==0
+%                         yyaxis left
+%                   
+%                     elseif iplotdata==2 && strcmp(cfg.errortype, 'std') && mod(itrialtype,2)~=0
+%                         yyaxis right
+%                     end
                     
                       plot(1:size(ppantData,2), ppantData(iplotdata,:),'color', usecolsWalk{itrialtype},...
                         'linestyle', uselinesTarget{itrialtype},...
@@ -141,14 +142,14 @@ elseif strcmp(cfg.plotlevel, 'GFX')
                     meanP = nanmean(tmpD,1);
                     stEP = CousineauSEM(tmpD);
                     
-                    % if comparing variance, fast and slow targs need to be
-                    % on different axes:
-%                     if iplotdata==2 && strcmp(cfg.errortype, 'std') && mod(itrialtype,2)==0
-%                         yyaxis left
-%                   
-%                     elseif iplotdata==2 && strcmp(cfg.errortype, 'std') && mod(itrialtype,2)~=0
-%                         yyaxis right
-%                     end
+%                     if comparing variance, fast and slow targs need to be
+%                     on different axes:
+                    if iplotdata==2 && strcmp(cfg.errortype, 'std') && mod(itrialtype,2)==0
+                        yyaxis left
+                  
+                    elseif iplotdata==2 && strcmp(cfg.errortype, 'std') && mod(itrialtype,2)~=0
+                        yyaxis right
+                    end
                     
                     sh=shadedErrorBar(1:size(ppantData,3), meanP, stEP,...                                            
                    {'color', usecolsWalk{itrialtype},...

@@ -7,10 +7,13 @@ cd([datadir filesep 'ProcessedData'])
 pfols= dir([pwd  filesep '*PFX_data.mat']);
 nsubs= length(pfols);
 
-job.concatGFX=1;
-job.plotPFX=0; % single and dual gait cycles.
-job.plotGFX=1; %
-job.plotGFX_sepdimensions= 0; % splits error by source (X, Y, or Z dimension).
+job.concatGFX=0;
+%PFX:
+job.plotPFX_gcycles=0; % single and dual gait cycles.
+%GFX:
+job.potGFX_granderror = 1; %raincloud plots, grand mean per condition.
+job.plotGFX_gcycles=0; % gaitcycles
+job.plotGFX_gcycles_sepdimensions= 0; % splits error by source (X, Y, or Z dimension).
 
 %job.plotmeanerrror + stderror (collapsed across gaitcycle points). show
 %condition differences. (n=20).
@@ -24,10 +27,11 @@ if job.concatGFX
     [GFX_error,GFX_headY] = deal([]); % we've resampled to 100 points.
     
     subjIDs={};
-    for isub = 1:10%nsubs
+    for isub = 1:nsubs
         cd([datadir filesep 'ProcessedData'])
         %%load data from import job.
         load(pfols(isub).name);
+        disp(['concat for ' subjID])
         %%
         for itrialtype = 1:4 %% save each condition separately.
         
@@ -64,12 +68,13 @@ if job.concatGFX
         
         
         
-        subjIDs{isub} = ppant;
+       
         end
-        
+         subjIDs{isub} = subjID(1:4);
         
         
     end %ppant
+    %%
     save('GFX_gaitcycle_error', 'GFX_error', 'GFX_headY', 'subjIDs');
     
 else
@@ -80,13 +85,13 @@ end % job concat
 %% print PFX
 %%%%%%%%%%%%%%%%%%%%%%
 %%
-if job.plotPFX
+if job.plotPFX_gcycles
     %%
  %for each ppant, plot the distribution of targ onset positions:
  % pass in some details needed for accurate plots:
  cfg=[];
  cfg.subjIDs = subjIDs;
- cfg.errortype = 'mean'; % 'STD'
+ cfg.errortype = 'std'; % 'mean' or 'STD'
  cfg.datadir= datadir; % for orienting to figures folder
  cfg.HeadData= GFX_headY; 
  cfg.plotlevel = 'PFX'; 
@@ -100,22 +105,35 @@ end
 %%%%%%%%%%%%%%%%%%%%%%
 %% print GroupFX
 %%%%%%%%%%%%%%%%%%%%%%
-if job.plotGFX
-    %%
-    %for each ppant, plot the distribution of targ onset positions:
- % pass in some details needed for accurate plots:
- cfg=[];
- cfg.subjIDs = subjIDs;
- cfg.errortype = 'std'; % std
- cfg.datadir= datadir; % for orienting to figures folder
- cfg.HeadData= GFX_headY; 
- cfg.plotlevel = 'GFX'; 
- % cycles through ppants, plots with correct labels.
- plot_HandTargError(GFX_error, cfg);
 
+if job.potGFX_granderror
+    %% raincloud plots, grand mean per condition.
+    cfg=[];
+     cfg.subjIDs = subjIDs;
+    cfg.errortype = 'mean'; % std
+    cfg.datadir= datadir; % for orienting to figures folder
+%     cfg.HeadData= GFX_headY;
+    cfg.plotlevel = 'GFX';
+    
+    plot_GrandMeanError(GFX_error, cfg);
 end
 
-if job.plotGFX_sepdimensions
+if job.plotGFX_gcycles
+    %%
+    %for each ppant, plot the distribution of targ onset positions:
+    % pass in some details needed for accurate plots:
+    cfg=[];
+    cfg.subjIDs = subjIDs;
+    cfg.errortype = 'mean'; % std
+    cfg.datadir= datadir; % for orienting to figures folder
+    cfg.HeadData= GFX_headY;
+    cfg.plotlevel = 'GFX';
+    % cycles through ppants, plots with correct labels.
+    plot_HandTargError(GFX_error, cfg);
+    
+end
+
+if job.plotGFX_gcycles_sepdimensions
     %%
     %for each ppant, plot the distribution of targ onset positions:
  % pass in some details needed for accurate plots:
