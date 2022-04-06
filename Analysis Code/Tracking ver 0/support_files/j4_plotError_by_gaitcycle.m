@@ -124,7 +124,7 @@ if job.plotGFX_gcycles
     % pass in some details needed for accurate plots:
     cfg=[];
     cfg.subjIDs = subjIDs;
-    cfg.errortype = 'mean'; % std
+    cfg.errortype = 'std'; % std
     cfg.datadir= datadir; % for orienting to figures folder
     cfg.HeadData= GFX_headY;
     cfg.plotlevel = 'GFX';

@@ -4,11 +4,11 @@
 %%%%%% TRACKING TASK version %%%%%%
 %frame by frame first:
 %Mac:
-%  datadir='/Users/matthewdavidson/Documents/GitHub/active-perception-tracking_ver0/Analysis Code/Tracking ver 0/Raw_data';
+ datadir='/Users/matthewdavidson/Documents/GitHub/active-perception-tracking_ver0/Analysis Code/Tracking ver 0/Raw_data';
 %mac-HD
 % datadir = '/Volumes/WHITEHD_TB/Tracking ver 0/Raw_data';
  %PC:
-datadir='C:\Users\User\Documents\matt\GitHub\active-perception-tracking_ver0\Analysis Code\Tracking ver 0\Raw_data';
+% datadir='C:\Users\User\Documents\matt\GitHub\active-perception-tracking_ver0\Analysis Code\Tracking ver 0\Raw_data';
 %PC-HD
 % datadir = 'E:\Tracking ver 0\Raw_data';%%
 
@@ -21,7 +21,7 @@ nsubs= length(pfols);
 tr= table([1:length(pfols)]',{pfols(:).name}' );
 disp(tr)
 %% Per csv file, import and wrangle into Matlab Structures, and data matrices:
-for ippant = 20:nsubs
+for ippant = 12:nsubs
    %%
     cd(datadir)
    
