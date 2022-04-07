@@ -128,7 +128,7 @@ elseif strcmp(cfg.plotlevel, 'GFX')
                    ylabel('Head position');
                    
                     title([psubj ], 'interpreter', 'none')
-                    
+                    set(gca,'fontsize', 15)
                     pcounter=pcounter+1;
                     %% now overlay error (xyz)
                     titler={'anterior-posterior (x)', 'vertical (y)', 'medio-lateral (z)'};
@@ -149,7 +149,7 @@ elseif strcmp(cfg.plotlevel, 'GFX')
                         'fontsize', 15);
                     xlabel(' % gait cycle')
                     
-                    
+                    ylabel('Error [m]')
                         pcounter= pcounter+1;
                     end
                     %add plot handles for legend:

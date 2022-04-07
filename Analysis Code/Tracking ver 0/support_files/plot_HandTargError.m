@@ -144,13 +144,13 @@ elseif strcmp(cfg.plotlevel, 'GFX')
                     
 %                     if comparing variance, fast and slow targs need to be
 %                     on different axes:
-                    if iplotdata==2 && strcmp(cfg.errortype, 'std') && mod(itrialtype,2)==0
-                        yyaxis left
-                  
-                    elseif iplotdata==2 && strcmp(cfg.errortype, 'std') && mod(itrialtype,2)~=0
-                        yyaxis right
-                    end
-                    
+%                     if iplotdata==2 && strcmp(cfg.errortype, 'std') && mod(itrialtype,2)==0
+%                         yyaxis left
+%                   
+%                     elseif iplotdata==2 && strcmp(cfg.errortype, 'std') && mod(itrialtype,2)~=0
+%                         yyaxis right
+%                     end
+%                     
                     sh=shadedErrorBar(1:size(ppantData,3), meanP, stEP,...                                            
                    {'color', usecolsWalk{itrialtype},...
                         'linestyle', uselinesTarget{itrialtype},...
@@ -163,11 +163,11 @@ elseif strcmp(cfg.plotlevel, 'GFX')
                     
                     set(gca, 'xtick', xticks(nGaits_toPlot,:), ...
                         'XTickLabel', {'0' , '25' '50', '75', '100'},...
-                        'fontsize', 25);
+                        'fontsize', 15);
                     xlabel(' % gait cycle')
-                    
+                    if nGaits_toPlot==1
                     title([psubj ], 'interpreter', 'none')
-                    
+                    end
                     
                     if iplotdata==1 && nGaits_toPlot==1 && itrialtype==4
                         subplot(221); hold on

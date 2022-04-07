@@ -7,12 +7,12 @@ cd([datadir filesep 'ProcessedData'])
 pfols= dir([pwd  filesep '*PFX_data.mat']);
 nsubs= length(pfols);
 
-job.concatGFX=0;
+job.concatGFX=1;
 %PFX:
 job.plotPFX_gcycles=0; % single and dual gait cycles.
 %GFX:
-job.potGFX_granderror = 1; %raincloud plots, grand mean per condition.
-job.plotGFX_gcycles=0; % gaitcycles
+job.potGFX_granderror = 0; %raincloud plots, grand mean per condition.
+job.plotGFX_gcycles=1; % gaitcycles
 job.plotGFX_gcycles_sepdimensions= 0; % splits error by source (X, Y, or Z dimension).
 
 %job.plotmeanerrror + stderror (collapsed across gaitcycle points). show
@@ -124,7 +124,7 @@ if job.plotGFX_gcycles
     % pass in some details needed for accurate plots:
     cfg=[];
     cfg.subjIDs = subjIDs;
-    cfg.errortype = 'mean'; % std
+    cfg.errortype = 'std'; % std
     cfg.datadir= datadir; % for orienting to figures folder
     cfg.HeadData= GFX_headY;
     cfg.plotlevel = 'GFX';
