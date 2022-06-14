@@ -131,7 +131,7 @@ public class trialParameters : MonoBehaviour
         int typeCount = 0; // we will do half the trials of each type in our staircase:
         
 
-        int nTrialsperTypestaircase = ntrialsperBlock / 5; // even number output!
+        int nTrialsperTypestaircase = ntrialsperBlock / 10; // even number output!
         int[] practicetypeArray = new int[10];
         practicetypeArray[0] = 0; // stationary to begin with.                         
         practicetypeArray[1] = 3; // normal walk- slow sphere
