@@ -1,6 +1,16 @@
 %j4_plotError_by_gaitcycle;
 
 % plot per ppant, plot across ppnts
+%%%%%% TRACKING TASK version %%%%%%
+%frame by frame first:
+%Mac:
+ datadir='/Users/matthewdavidson/Documents/GitHub/active-perception-tracking_ver0/Analysis Code/Tracking ver 0/Raw_data';
+%mac-HD
+% datadir = '/Volumes/WHITEHD_TB/Tracking ver 0/Raw_data';
+ %PC:
+% datadir='C:\Users\User\Documents\matt\GitHub\active-perception-tracking_ver0\Analysis Code\Tracking ver 0\Raw_data';
+%PC-HD
+% datadir = 'E:\Tracking ver 0\Raw_data';%%
 
 cd([datadir filesep 'ProcessedData'])
 
@@ -11,10 +21,11 @@ job.concatGFX=1;
 %PFX:
 job.plotPFX_gcycles=0; % single and dual gait cycles.
 %GFX:
-job.potGFX_granderror = 0; %raincloud plots, grand mean per condition.
-job.plotGFX_gcycles=1; % gaitcycles
+job.plotGFX_granderror = 0; %raincloud plots, grand mean per condition.
+job.plotGFX_gcycles=0; % gaitcycles
 job.plotGFX_gcycles_sepdimensions= 0; % splits error by source (X, Y, or Z dimension).
 
+job.plotGFX_gcycles_forVSS=1; % diff colours, averaging targ conds.
 %job.plotmeanerrror + stderror (collapsed across gaitcycle points). show
 %condition differences. (n=20).
 
@@ -78,6 +89,7 @@ if job.concatGFX
     save('GFX_gaitcycle_error', 'GFX_error', 'GFX_headY', 'subjIDs');
     
 else
+    %%
     load('GFX_gaitcycle_error');
 end % job concat
 
@@ -106,7 +118,7 @@ end
 %% print GroupFX
 %%%%%%%%%%%%%%%%%%%%%%
 
-if job.potGFX_granderror
+if job.plotGFX_granderror
     %% raincloud plots, grand mean per condition.
     cfg=[];
      cfg.subjIDs = subjIDs;
@@ -124,7 +136,7 @@ if job.plotGFX_gcycles
     % pass in some details needed for accurate plots:
     cfg=[];
     cfg.subjIDs = subjIDs;
-    cfg.errortype = 'std'; % std
+    cfg.errortype = 'mean'; % 'mean' or 'std'
     cfg.datadir= datadir; % for orienting to figures folder
     cfg.HeadData= GFX_headY;
     cfg.plotlevel = 'GFX';
@@ -146,4 +158,18 @@ if job.plotGFX_gcycles_sepdimensions
  % cycles through ppants, plots with correct labels.
  plot_HandTargError_sepdimensions(GFX_error, cfg);
 
+end
+
+if job.plotGFX_gcycles_forVSS % diff colours, averaging targ conds.
+%%
+     %for each ppant, plot the distribution of targ onset positions:
+    % pass in some details needeaid for accurate plots:
+    cfg=[];
+    cfg.subjIDs = subjIDs;
+    cfg.errortype = 'mean'; % std
+    cfg.datadir= datadir; % for orienting to figures folder
+    cfg.HeadData= GFX_headY;
+    cfg.plotlevel = 'GFX';
+    % cycles through ppants, plots with correct labels.
+    plot_HandTargError_forVSS(GFX_error, cfg);
 end

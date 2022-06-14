@@ -9,6 +9,10 @@
 % First take: resample time vector of each gait to 100 points, then average across
 % gaits.
 
+%%%%%% TRACKING TASK version %%%%%%
+%frame by frame first:
+%Mac:
+ datadir='/Users/matthewdavidson/Documents/GitHub/active-perception-tracking_ver0/Analysis Code/Tracking ver 0/Raw_data';
 
 % clear all; close all;
 % datadir = 'C:\Users\vrlab\Documents\Matt\Projects\Output\walking_Ver0';
@@ -19,7 +23,7 @@ Fs = 90;
 
 resampSize = 200; % resample the gait cycle (DUAL CYCLE) to this many samps.
 %%
-for ippant = 10:11%:nsubs
+for ippant = 1:nsubs
     cd([datadir filesep 'ProcessedData'])    %%load data from import job.
     
     load(pfols(ippant).name, 'HeadPos', 'subjID','HandPos', 'trial_TargetSummary')
@@ -145,17 +149,18 @@ for ippant = 10:11%:nsubs
             end
             
         end % gait in trial.
-        trial_targetSummary(itrial).gaitError_doubGC = gaitErr;
-        trial_targetSummary(itrial).gaitErrorXdim_doubGC = gaitErrX;
-        trial_targetSummary(itrial).gaitErrorYdim_doubGC = gaitErrY;
-        trial_targetSummary(itrial).gaitErrorZdim_doubGC = gaitErrZ;
+        trial_TargetSummary(itrial).gaitError_doubGC = gaitErr;
+        trial_TargetSummary(itrial).gaitErrorXdim_doubGC = gaitErrX;
+        trial_TargetSummary(itrial).gaitErrorYdim_doubGC = gaitErrY;
+        trial_TargetSummary(itrial).gaitErrorZdim_doubGC = gaitErrZ;
          
-        trial_targetSummary(itrial).gaitHeadY_doubGC= gaitHeadY;
+        trial_TargetSummary(itrial).gaitHeadY_doubGC= gaitHeadY;
         
 
         % save this gait info per trial in structure as well.
         HandPos(itrial).gaitData_doubGC = gaitD;
-        
+        trial_TargetSummary(itrial).gaitData_doubGC = gaitD;
+
     end %trial
     
     %% for all trials, compute the average error and head pos per time point
@@ -171,7 +176,15 @@ for ippant = 10:11%:nsubs
     [trialIdx,walkSpeed, targetSpeed,trialType]=deal(NaN);
     
     PFX_trialinfo = table(trialIdx, walkSpeed,targetSpeed,trialType);
-    
+        
+    %store raw gait head pos:
+    PFX_headYraw = zeros(1,length(trialTime)); % will fill
+    PFX_headYresamp = zeros(1,100); % will fill
+    [allpks_point, allEndtrs_point, gaitTypes]= deal([]);
+     %the above has an xvector (sample dist to pk/ trough), and value (for
+     %plotting below).
+   gcounter=1;
+   
     for itrial= 1:size(HeadPos,2)
          if HeadPos(itrial).isPrac || HeadPos(itrial).isStationary
             continue
@@ -182,14 +195,18 @@ for ippant = 10:11%:nsubs
         if skip==1
             continue
         end
-        
+         % omit first and last gaitcycles from each trial?
+       
+        nGaits = length(trial_TargetSummary(itrial).gaitData_doubGC);
+        allgaits = 1:nGaits;
+        usegaits = allgaits(3:end-2);
         % omit first and last gaitcycles from each trial
-        TrialError= trial_targetSummary(itrial).gaitError_doubGC([3:(end-2)],:);
-        TrialErrorXdim= trial_targetSummary(itrial).gaitErrorXdim_doubGC([3:(end-2)],:);
-        TrialErrorYdim= trial_targetSummary(itrial).gaitErrorYdim_doubGC([3:(end-2)],:);
-        TrialErrorZdim= trial_targetSummary(itrial).gaitErrorZdim_doubGC([3:(end-2)],:);
+        TrialError= trial_TargetSummary(itrial).gaitError_doubGC(usegaits,:);
+        TrialErrorXdim= trial_TargetSummary(itrial).gaitErrorXdim_doubGC(usegaits,:);
+        TrialErrorYdim= trial_TargetSummary(itrial).gaitErrorYdim_doubGC(usegaits,:);
+        TrialErrorZdim= trial_TargetSummary(itrial).gaitErrorZdim_doubGC(usegaits,:);
         
-        TrialY= trial_targetSummary(itrial).gaitHeadY_doubGC([3:(end-2)],:);
+        TrialY= trial_TargetSummary(itrial).gaitHeadY_doubGC(usegaits,:);
         
         PFX_err_doubleGC(itrial,:) = mean(TrialError,1);
         PFX_errSTD_doubleGC(itrial,:) = std(TrialError);
@@ -206,19 +223,38 @@ for ippant = 10:11%:nsubs
         PFX_trialinfo.targetSpeed(itrial) = HeadPos(itrial).targSpeed;
         PFX_trialinfo.trialType(itrial) = HeadPos(itrial).trialType;
         
+        
+        
+        
+          
+        %slow!
+        for ig = usegaits
+            storemeraw = trial_TargetSummary(itrial).gaitData_doubGC(ig).Head_Yraw;
+            storemeresamp = trial_TargetSummary(itrial).gaitData_doubGC(ig).Head_Y_resampled;
+            PFX_headYraw(gcounter,1:length(storemeraw)) = storemeraw;
+%             PFX_headYresamp(gcounter,1:length(storemeresamp)) = storemeresamp;
+          %store the index of the pk point as well, and end value (trough) for plots.
+            [~,allpks_point(gcounter)] =  max(storemeraw);
+            allEndtrs_point(gcounter) = length(storemeraw);
+            gaitTypes(gcounter) = HeadPos(itrial).trialType;
+            gcounter=gcounter+1;
+        end
+        
+        
     end % trial
     %%
-    
+    PFX_headYraw_doubGC = PFX_headYraw;
+    gaitTypes_doubGC= gaitTypes;
 
     %%
     disp(['saving targ error per stride cycle gait...' savename])
     PFX_trialinfo_doubgc = PFX_trialinfo;
      save(pfols(ippant).name, ...
-        'HeadPos','trial_TargetSummary', '-append');
+        'HeadPos','trial_TargetSummary', 'PFX_headYraw_doubGC', 'gaitTypes_doubGC', '-append');
     
     savename2= [subjID '_PFX_data'];
     save(savename2, ...
         'PFX_trialinfo_doubgc','PFX_err_doubleGC', 'PFX_errSTD_doubleGC','PFX_headY_doubleGC','PFX_errZdim_doubleGC', ...
-        'PFX_errXdim_doubleGC', 'PFX_errYdim_doubleGC', '-append');
+        'PFX_errXdim_doubleGC', 'PFX_errYdim_doubleGC', 'PFX_headYraw_doubGC', 'gaitTypes_doubGC','-append');
 end % subject
 
